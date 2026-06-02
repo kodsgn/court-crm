@@ -1014,7 +1014,7 @@ function daysLabel(d){
   if(d<=3) return {cls:'rb-d3',txt:`Через ${d} дн.`};
   if(d<=7) return {cls:'rb-d7',txt:`Через ${d} дн.`};
   if(d<=14) return {cls:'rb-d14',txt:`Через ${d} дн.`};
-  return {cls:'rb-far',txt:`${fmtDate(serial)}`};
+  return {cls:'rb-far',txt:`Через ${d} дн.`};
 }
 function remClass(d){
   if(d<0) return 'rem-0';
