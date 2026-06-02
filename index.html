@@ -267,7 +267,7 @@ a.url-link:hover{text-decoration:underline}
         <button class="btn btn-ghost btn-sm" onclick="calNext()">Наступний ›</button>
       </div>
     </div>
-    <div class="cal-panel" style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:stretch">
+    <div class="cal-panel" style="display:grid;grid-template-columns:1fr minmax(300px,38%);gap:20px;align-items:start">
       <div id="cal-grid"></div>
       <div id="cal-day-detail" style="background:#f9fafb;border-radius:8px;padding:14px;overflow-y:auto"></div>
     </div>
@@ -2018,6 +2018,17 @@ function renderCalendar(){
 
   if(showDay) calShowDay(showDay, hearingsByDay);
   else calShowMonthSummary(hearingsByDay);
+  syncCalDetailHeight();
+}
+
+function syncCalDetailHeight(){
+  const grid=document.getElementById('cal-grid');
+  const detail=document.getElementById('cal-day-detail');
+  if(!grid||!detail) return;
+  requestAnimationFrame(()=>{
+    const h=grid.offsetHeight;
+    if(h>0){ detail.style.maxHeight=h+'px'; detail.style.overflowY='auto'; }
+  });
 }
 
 function calSelectDay(d){
