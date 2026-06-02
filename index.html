@@ -259,9 +259,9 @@ a.url-link:hover{text-decoration:underline}
 
   <!-- Calendar card -->
   <div class="card" style="margin-bottom:16px">
-    <div class="card-h">
+    <div class="card-h" style="display:grid;grid-template-columns:1fr minmax(300px,38%);align-items:center;gap:20px">
       <span class="card-title">📅 Календар засідань</span>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
         <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹ Попередній</button>
         <span id="cal-month-label" style="font-weight:700;font-size:14px;min-width:160px;text-align:center"></span>
         <button class="btn btn-ghost btn-sm" onclick="calNext()">Наступний ›</button>
