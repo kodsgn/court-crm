@@ -183,7 +183,7 @@ jobs:
             if (!lines.length) {
               lines.push('✅ Нагадувань на сьогодні немає.');
             } else {
-              lines.unshift('⚖️ <b>КешТайм CRM</b>\n');
+              lines.unshift('⚖️ <b>cashtime CRM</b>\n');
             }
 
             const result = await sendTg(TG_BOT, TG_CHAT, lines.join('\n'));

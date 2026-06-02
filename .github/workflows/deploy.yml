@@ -24,7 +24,7 @@ jobs:
             --password "${{ secrets.SITE_PASSWORD }}" \
             --directory dist \
             --short \
-            --template-title "КешТайм CRM" \
+            --template-title "cashtime CRM" \
             --template-instructions "Введіть пароль для доступу"
 
       - uses: actions/configure-pages@v4
