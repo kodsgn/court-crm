@@ -1,0 +1,194 @@
+name: Daily CRM Notifications
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # 08:00 Kyiv (UTC+3)
+  workflow_dispatch:      # ручний запуск для тесту
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send reminders to Telegram
+        env:
+          GS_URL: ${{ secrets.GS_SCRIPT_URL }}
+          GS_TOKEN: crm2026secret
+          TG_BOT: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          node << 'EOF'
+          const https = require('https');
+
+          function isoToSerial(iso) {
+            return Math.round(new Date(iso + 'T00:00:00Z').getTime() / 86400000) + 25569;
+          }
+          function serialToDate(s) {
+            return new Date((s - 25569) * 86400000);
+          }
+          function todaySerial() {
+            const d = new Date(); d.setHours(0,0,0,0);
+            return Math.round(d.getTime() / 86400000) + 25569;
+          }
+          function fmt(s) {
+            return serialToDate(s).toLocaleDateString('uk-UA', {day:'2-digit',month:'2-digit',year:'numeric'});
+          }
+          function parseMoney(v) {
+            return parseFloat(String(v).replace(/[^\d.,-]/g,'').replace(',','.')) || 0;
+          }
+          function parseDate(str) {
+            const p = String(str).trim().split('.');
+            if (p.length !== 3) return null;
+            return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+          }
+
+          function fetch(url) {
+            return new Promise((res, rej) => {
+              https.get(url, r => {
+                let d = '';
+                r.on('data', c => d += c);
+                r.on('end', () => { try { res(JSON.parse(d)); } catch(e) { rej(new Error('Bad JSON')); } });
+              }).on('error', rej);
+            });
+          }
+
+          function sendTg(bot, chat, text) {
+            return new Promise((res, rej) => {
+              const body = JSON.stringify({ chat_id: chat, text, parse_mode: 'HTML' });
+              const req = https.request({
+                hostname: 'api.telegram.org',
+                path: `/bot${bot}/sendMessage`,
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+              }, r => { let d=''; r.on('data',c=>d+=c); r.on('end',()=>res(JSON.parse(d))); });
+              req.on('error', rej);
+              req.write(body); req.end();
+            });
+          }
+
+          function parseCases(rows) {
+            if (!rows || rows.length < 2) return [];
+            let hi = rows.findIndex(r => r.some(c => /відповідач|номер|суд/i.test(c)));
+            if (hi < 0) hi = 0;
+            const hdr = rows[hi].map(c => String(c).toLowerCase().trim());
+            const col = pats => hdr.findIndex(h => pats.some(p => p.test(h)));
+            const ci = {
+              id:    col([/^номер$|^№$|^ду$/]),
+              def:   col([/відповідач|піб|піп/]),
+              court: col([/суд/]),
+              ent:   col([/^юо$/]),
+            };
+            return rows.slice(hi+1).map(row => {
+              const id = String(row[ci.id]??'').trim();
+              if (!id || !/^\d/.test(id)) return null;
+              return {
+                id,
+                defendant: String(row[ci.def]??'').trim(),
+                court: String(row[ci.court]??'').trim(),
+                entity: String(row[ci.ent]??'').trim() || 'Адвокат',
+              };
+            }).filter(Boolean);
+          }
+
+          function parseActions(rows) {
+            if (!rows || rows.length < 2) return [];
+            let hi = rows.findIndex(r => r.some(c => /тип дії/i.test(c)));
+            if (hi < 0) hi = 0;
+            const hdr = rows[hi].map(c => String(c).toLowerCase().trim());
+            const col = pats => hdr.findIndex(h => pats.some(p => p.test(h)));
+            const ci = {
+              caseId: col([/^ду$|^ду\s|^номер$/]),
+              date:   col([/^дата$/]),
+              type:   col([/тип дії/]),
+              dec:    col([/сума рішення/]),
+            };
+            return rows.slice(hi+1).map(row => {
+              const caseId = String(row[ci.caseId]??'').trim();
+              if (!caseId || !/^\d/.test(caseId)) return null;
+              const iso = ci.date >= 0 ? parseDate(row[ci.date]) : null;
+              if (!iso) return null;
+              return {
+                caseId,
+                type: String(row[ci.type]??'').trim() || 'Засідання',
+                dateSerial: isoToSerial(iso),
+                decisionAmount: ci.dec >= 0 ? parseMoney(row[ci.dec]) : 0,
+              };
+            }).filter(Boolean);
+          }
+
+          async function main() {
+            const { GS_URL, GS_TOKEN, TG_BOT, TG_CHAT } = process.env;
+            if (!GS_URL) { console.log('GS_SCRIPT_URL not set — skip'); process.exit(0); }
+
+            const data = await fetch(`${GS_URL}?token=${encodeURIComponent(GS_TOKEN)}`);
+            if (data.error) throw new Error(data.error);
+
+            const cases   = parseCases(data['1_Реєстр ДУ']);
+            const actions = parseActions(data['2_Реєстр Дій']);
+            const today   = todaySerial();
+            const caseMap = Object.fromEntries(cases.map(c => [c.id, c]));
+
+            // last action per case+type
+            const last = {};
+            actions.forEach(a => {
+              const k = `${a.caseId}|${a.type}`;
+              if (!last[k] || a.dateSerial > last[k].dateSerial) last[k] = a;
+            });
+
+            const lines = [];
+
+            // 1. Hearings today or within 7 days
+            const seen = new Set();
+            const hearings = actions
+              .filter(a => a.type === 'Засідання' && a.dateSerial >= today && a.dateSerial <= today + 7)
+              .sort((a,b) => a.dateSerial - b.dateSerial)
+              .filter(a => { const k=`${a.caseId}|${a.dateSerial}`; if(seen.has(k)) return false; seen.add(k); return true; });
+
+            if (hearings.length) {
+              lines.push('🗓 <b>Засідання (7 днів):</b>');
+              hearings.forEach(a => {
+                const c = caseMap[a.caseId] || {};
+                const diff = a.dateSerial - today;
+                const when = diff === 0 ? '⚡ Сьогодні' : diff === 1 ? 'Завтра' : `Через ${diff} дн.`;
+                lines.push(`  • <b>ДУ-${a.caseId}</b> ${c.defendant||''} — ${fmt(a.dateSerial)} (${when})`);
+              });
+              lines.push('');
+            }
+
+            // 2. Enforcement writs (decision + 30 days, no writ yet, deadline within 14 days or overdue)
+            const enf = cases
+              .map(c => {
+                const dec = last[`${c.id}|Рішення`];
+                const writ = last[`${c.id}|Вик.лист`];
+                if (!dec || writ) return null;
+                const deadline = dec.dateSerial + 30;
+                const diff = deadline - today;
+                if (diff > 14) return null;
+                return { c, deadline, diff };
+              })
+              .filter(Boolean)
+              .sort((a,b) => a.diff - b.diff);
+
+            if (enf.length) {
+              lines.push('📜 <b>Виконавчий лист — потрібен:</b>');
+              enf.forEach(({ c, deadline, diff }) => {
+                const urgency = diff < 0
+                  ? `⚠️ Прострочено на ${Math.abs(diff)} дн.`
+                  : diff === 0 ? '⚠️ Дедлайн сьогодні!'
+                  : `Залишилось ${diff} дн. (до ${fmt(deadline)})`;
+                lines.push(`  • <b>ДУ-${c.id}</b> ${c.defendant} — ${urgency}`);
+              });
+              lines.push('');
+            }
+
+            if (!lines.length) {
+              lines.push('✅ Нагадувань на сьогодні немає.');
+            } else {
+              lines.unshift('⚖️ <b>КешТайм CRM</b>\n');
+            }
+
+            const result = await sendTg(TG_BOT, TG_CHAT, lines.join('\n'));
+            console.log('Telegram:', result.ok ? 'OK' : JSON.stringify(result));
+          }
+
+          main().catch(e => { console.error(e.message); process.exit(1); });
+          EOF
