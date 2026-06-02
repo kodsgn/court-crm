@@ -43,11 +43,13 @@ jobs:
 
           function fetch(url) {
             return new Promise((res, rej) => {
-              https.get(url, r => {
+              const get = u => https.get(u, r => {
+                if (r.statusCode === 301 || r.statusCode === 302) return get(r.headers.location);
                 let d = '';
                 r.on('data', c => d += c);
-                r.on('end', () => { try { res(JSON.parse(d)); } catch(e) { rej(new Error('Bad JSON')); } });
+                r.on('end', () => { try { res(JSON.parse(d)); } catch(e) { rej(new Error('Bad JSON: ' + d.slice(0,120))); } });
               }).on('error', rej);
+              get(url);
             });
           }
 
