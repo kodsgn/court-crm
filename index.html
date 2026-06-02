@@ -125,9 +125,6 @@ label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4
 a.url-link{color:var(--primary);font-size:11px;text-decoration:none}
 a.url-link:hover{text-decoration:underline}
 
-/* ── Notification banner ── */
-.notif-bar{background:#1e429f;color:#fff;padding:10px 20px;font-size:13px;display:flex;align-items:center;gap:10px}
-.notif-bar button{background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px}
 
 .timeline-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-red{background:#ef4444}.dot-orange{background:#f97316}
@@ -1979,39 +1976,6 @@ function calShowMonthSummary(hearingsByDay){
 // ═══════════════════════════════════════════════════════════
 // BROWSER NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════
-function requestNotifications(){
-  if('Notification' in window && Notification.permission==='default'){
-    Notification.requestPermission().then(p=>{
-      if(p==='granted') scheduleNotifications();
-    });
-  } else if(Notification.permission==='granted'){
-    scheduleNotifications();
-  }
-}
-function scheduleNotifications(){
-  const s=getSettings();
-  const actions=getActions(), cases=getCases();
-  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
-
-  // Upcoming hearings
-  const urgent=actions
-    .filter(a=>a.type==='Засідання' && a.dateSerial)
-    .map(a=>({...a,days:daysDiff(a.dateSerial),c:caseMap[a.caseId]}))
-    .filter(a=>a.days>=0 && a.days<=s.remindDays && a.c);
-  if(urgent.length>0){
-    new Notification(`⚖️ ${urgent.length} засідань найближчі ${s.remindDays} дні`,{
-      body:urgent.slice(0,3).map(a=>`${fmtDate(a.dateSerial)} — ${a.c.defendant}`).join('\n'),
-    });
-  }
-
-  // Overdue enforcement writs
-  const overdueEnf=buildEnforcementList(cases,actions,s).filter(c=>c.daysSinceDec>s.enforcementDays);
-  if(overdueEnf.length>0){
-    new Notification(`📜 ${overdueEnf.length} справ — виконавчий лист прострочено!`,{
-      body:overdueEnf.slice(0,3).map(c=>`ДУ ${c.id} · ${c.defendant} — ${c.daysSinceDec} днів`).join('\n'),
-    });
-  }
-}
 
 // Close modals on overlay click
 document.querySelectorAll('.overlay').forEach(o=>{
@@ -2381,7 +2345,6 @@ function loadGSConfig(){
 // ═══════════════════════════════════════════════════════════
 calInit();
 renderAll();
-requestNotifications();
 setTimeout(loadGSConfig, 100);
 </script>
 </body>
