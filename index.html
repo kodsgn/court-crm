@@ -31,7 +31,66 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
-@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}
+/* ── 900px ── */
+@media(max-width:900px){
+  .two-col,.three-col{grid-template-columns:1fr}
+}
+
+/* ── 768px — планшет ── */
+@media(max-width:768px){
+  .main{padding:12px}
+  /* Nav */
+  .nav{padding:0 10px;gap:4px;height:48px}
+  .nav-brand{font-size:14px;margin-right:4px}
+  .nav-btn{padding:5px 9px;font-size:12px}
+  .nav-gs-label{display:none}
+  /* Section filters */
+  .section-actions{flex-wrap:wrap;gap:6px}
+  .section-actions .page-title{width:100%;margin-bottom:2px}
+  .section-actions input[type=text]{flex:1;min-width:140px}
+  .section-actions select{flex:1;min-width:120px}
+  /* Calendar: stack */
+  .cal-panel{grid-template-columns:1fr!important}
+  /* Card header */
+  .card-h{flex-wrap:wrap;gap:6px}
+}
+
+/* ── 480px — телефон ── */
+@media(max-width:480px){
+  .main{padding:8px}
+  /* Nav */
+  .nav{height:auto;min-height:44px;flex-wrap:wrap;padding:6px 10px;gap:0}
+  .nav-brand{font-size:13px;margin-right:auto}
+  .nav-right{order:1;width:100%;justify-content:flex-end;padding:4px 0 2px}
+  .nav-links{order:2;width:100%;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .nav-links::-webkit-scrollbar{display:none}
+  .nav-btn{padding:5px 8px;font-size:11px;white-space:nowrap}
+  /* Sticky nav gets more height */
+  .main{padding-top:8px}
+  /* Grids */
+  .stats-row{grid-template-columns:1fr 1fr}
+  .stat-val{font-size:22px}
+  /* Cards */
+  .card{padding:12px}
+  /* Modal */
+  .modal{padding:16px}
+  .form-row{grid-template-columns:1fr}
+  .modal-footer{flex-direction:column-reverse;gap:6px}
+  .modal-footer .btn{width:100%;justify-content:center}
+  /* Calendar nav */
+  .cal-month-nav{flex-wrap:wrap;gap:4px;justify-content:center}
+  .cal-month-nav span{min-width:auto!important;font-size:13px}
+  .cal-cell{min-height:38px;font-size:12px;padding-top:6px}
+  .cal-dow{font-size:10px;padding:4px 1px}
+  /* Tables */
+  td,th{padding:7px 8px}
+  /* Section actions */
+  .section-actions input[type=text]{width:100%;flex:unset}
+  .section-actions select{width:100%;flex:unset}
+  /* Reminder items */
+  .rem{grid-template-columns:auto 1fr;gap:6px}
+  .rem-badge{display:none}
+}
 
 /* ── CARD ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
@@ -171,7 +230,7 @@ a.url-link:hover{text-decoration:underline}
   <div class="nav-right">
     <span id="alert-count" class="alert-dot" style="display:none">0</span>
     <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;gap:6px" onclick="openModal('modal-gsheets')" title="Синхронізація з Google Sheets">
-      📊 Google Sheets
+      📊 <span class="nav-gs-label">Google Sheets</span>
       <span id="gs-nav-indicator" style="display:none;font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:100px"></span>
     </button>
     <button class="btn btn-primary btn-sm" onclick="openModal('modal-case')">+ Справа</button>
@@ -193,7 +252,7 @@ a.url-link:hover{text-decoration:underline}
         <button class="btn btn-ghost btn-sm" onclick="calNext()">Наступний ›</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+    <div class="cal-panel" style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
       <div id="cal-grid"></div>
       <div id="cal-day-detail" style="background:#f9fafb;border-radius:8px;padding:14px;min-height:200px"></div>
     </div>
