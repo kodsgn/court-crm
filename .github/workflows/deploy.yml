@@ -23,6 +23,7 @@ jobs:
           npx staticrypt@3 index.html \
             --password "${{ secrets.SITE_PASSWORD }}" \
             --directory dist \
+            --short \
             --template-title "КешТайм CRM" \
             --template-instructions "Введіть пароль для доступу"
 
