@@ -51,25 +51,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .section-actions select{flex:1;min-width:120px}
   /* Calendar: stack */
   .cal-panel{grid-template-columns:1fr!important}
+  #cal-day-detail{min-height:auto;width:100%}
   /* Card header */
   .card-h{flex-wrap:wrap;gap:6px}
 }
+
+/* ── Hamburger ── */
+.nav-burger{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;margin-left:auto;line-height:1}
 
 /* ── 480px — телефон ── */
 @media(max-width:480px){
   .main{padding:8px}
   /* Nav */
-  .nav{height:auto;min-height:44px;flex-wrap:wrap;padding:6px 10px;gap:0}
-  .nav-brand{font-size:13px;margin-right:auto}
-  .nav-right{order:1;width:100%;justify-content:flex-end;padding:4px 0 2px}
-  .nav-links{order:2;width:100%;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-  .nav-links::-webkit-scrollbar{display:none}
-  .nav-btn{padding:5px 8px;font-size:11px;white-space:nowrap}
-  /* Sticky nav gets more height */
-  .main{padding-top:8px}
+  .nav{height:auto;min-height:48px;flex-wrap:wrap;padding:6px 10px;gap:0;align-items:center}
+  .nav-brand{font-size:14px;flex:1}
+  .nav-burger{display:block}
+  .nav-right{order:1;display:flex;align-items:center;gap:6px}
+  /* Nav links — dropdown */
+  .nav-links{
+    order:3;width:100%;
+    display:none;flex-direction:column;gap:2px;
+    padding:6px 0 4px;border-top:1px solid rgba(255,255,255,.2);margin-top:4px
+  }
+  .nav-links.open{display:flex}
+  .nav-btn{padding:9px 12px;font-size:13px;text-align:left;border-radius:6px;width:100%}
   /* Grids */
   .stats-row{grid-template-columns:1fr 1fr}
   .stat-val{font-size:22px}
+  .la-rates-grid{grid-template-columns:1fr}
+  .la-stats-grid{grid-template-columns:1fr 1fr}
   /* Cards */
   .card{padding:12px}
   /* Modal */
@@ -77,16 +87,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .form-row{grid-template-columns:1fr}
   .modal-footer{flex-direction:column-reverse;gap:6px}
   .modal-footer .btn{width:100%;justify-content:center}
-  /* Calendar nav */
-  .cal-month-nav{flex-wrap:wrap;gap:4px;justify-content:center}
-  .cal-month-nav span{min-width:auto!important;font-size:13px}
+  /* Calendar */
   .cal-cell{min-height:38px;font-size:12px;padding-top:6px}
   .cal-dow{font-size:10px;padding:4px 1px}
   /* Tables */
   td,th{padding:7px 8px}
   /* Section actions */
-  .section-actions input[type=text]{width:100%;flex:unset}
-  .section-actions select{width:100%;flex:unset}
+  .section-actions input[type=text],.section-actions select{width:100%;flex:unset}
   /* Reminder items */
   .rem{grid-template-columns:auto 1fr;gap:6px}
   .rem-badge{display:none}
@@ -189,6 +196,10 @@ a.url-link:hover{text-decoration:underline}
 .dot-red{background:#ef4444}.dot-orange{background:#f97316}
 .dot-blue{background:#3b82f6}.dot-green{background:#10b981}.dot-purple{background:#a855f7}
 
+/* ── Legal Aid grids ── */
+.la-rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.la-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+
 /* ── Progress bar ── */
 .prog-bar{height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:8px}
 .prog-fill{height:100%;border-radius:3px;background:var(--primary)}
@@ -219,9 +230,10 @@ a.url-link:hover{text-decoration:underline}
 <body>
 
 <!-- NAV -->
-<nav class="nav">
+<nav class="nav" id="main-nav">
   <span class="nav-brand">⚖️ cashtime CRM</span>
-  <div class="nav-links">
+  <button class="nav-burger" onclick="toggleNav()" aria-label="Меню">☰</button>
+  <div class="nav-links" id="nav-links">
     <button class="nav-btn active" onclick="showSection('dashboard')">Головна</button>
     <button class="nav-btn" onclick="showSection('cases')">Справи</button>
     <button class="nav-btn" onclick="showSection('actions')">Дії</button>
@@ -1119,11 +1131,15 @@ function typeBadge(t){
 // ═══════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
+function toggleNav(){
+  document.getElementById('nav-links').classList.toggle('open');
+}
 function showSection(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('section-'+id).classList.add('active');
   event.currentTarget.classList.add('active');
+  document.getElementById('nav-links').classList.remove('open');
   if(id==='cases') renderCases();
   if(id==='actions') renderActions();
   if(id==='reminders') renderReminders();
@@ -1479,7 +1495,7 @@ function renderLegalAidCard(actions, caseMap){
 
   dashSet('legal-aid-summary',`
     <!-- Rates config -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div class="la-rates-grid">
       <div style="padding:10px 14px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:12px;font-weight:700;color:#1e40af;white-space:nowrap">Адвокат:</span>
         <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:#1e40af">
@@ -1500,7 +1516,7 @@ function renderLegalAidCard(actions, caseMap){
       </div>
     </div>
     <!-- Summary stats -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="la-stats-grid">
       <div style="background:#ede9fe;border-radius:8px;padding:12px">
         <div class="stat-label" style="color:#5b21b6">Авто-розрахунок</div>
         <div style="font-size:18px;font-weight:800;color:#7c3aed">${fmtMoney(totalAuto)}</div>
