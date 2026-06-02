@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>КешТайм CRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a56db;--primary-d:#1e429f;--success:#057a55;--warn:#c27803;
+  --danger:#c81e1e;--purple:#7c3aed;--bg:#f3f4f6;--card:#fff;
+  --border:#e5e7eb;--text:#111827;--muted:#6b7280;--radius:10px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── NAVBAR ── */
+.nav{background:var(--primary);color:#fff;display:flex;align-items:center;gap:8px;padding:0 20px;height:52px;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.nav-brand{font-weight:700;font-size:17px;margin-right:12px;white-space:nowrap}
+.nav-links{display:flex;gap:2px;flex:1}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,.8);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;transition:.15s}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,.18);color:#fff}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.alert-dot{background:#ef4444;color:#fff;font-size:11px;font-weight:700;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+
+/* ── LAYOUT ── */
+.main{padding:20px;max-width:1400px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.page-title{font-size:20px;font-weight:700;margin-bottom:18px}
+
+/* ── GRID ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:14px;font-weight:700;color:var(--text)}
+.card-count{font-size:12px;color:var(--muted);background:#f3f4f6;padding:2px 8px;border-radius:100px}
+
+/* ── STAT CARD ── */
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.stat-val{font-size:26px;font-weight:800}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.c-blue{color:var(--primary)}.c-green{color:#059669}.c-orange{color:#d97706}.c-red{color:#dc2626}.c-purple{color:var(--purple)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-gray{background:#f3f4f6;color:#374151}
+.b-blue{background:#dbeafe;color:#1e40af}
+.b-green{background:#d1fae5;color:#065f46}
+.b-yellow{background:#fef3c7;color:#92400e}
+.b-orange{background:#ffedd5;color:#9a3412}
+.b-red{background:#fee2e2;color:#991b1b}
+.b-purple{background:#ede9fe;color:#5b21b6}
+.b-teal{background:#ccfbf1;color:#115e59}
+
+/* ── REMINDER ITEMS ── */
+.rem-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto}
+.rem{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border-left:4px solid}
+.rem-0{background:#fef2f2;border-color:#ef4444}
+.rem-1{background:#fff7ed;border-color:#f97316}
+.rem-2{background:#fefce8;border-color:#eab308}
+.rem-3{background:#eff6ff;border-color:#3b82f6}
+.rem-def{background:#f0fdf4;border-color:#22c55e}
+.rem-purple{background:#faf5ff;border-color:#a855f7}
+.rem-name{font-weight:600;font-size:13px;line-height:1.3}
+.rem-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.rem-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;text-align:center}
+.rb-today{background:#fee2e2;color:#991b1b}
+.rb-d3{background:#ffedd5;color:#9a3412}
+.rb-d7{background:#fef3c7;color:#92400e}
+.rb-d14{background:#dbeafe;color:#1e40af}
+.rb-far{background:#f3f4f6;color:#374151}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+.tbl-filter{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 12px;background:#f9fafb;border-bottom:2px solid var(--border);font-weight:600;font-size:11px;color:var(--muted);white-space:nowrap;position:sticky;top:0}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f9fafb}
+.td-name{font-weight:600;font-size:13px}
+.td-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.td-amt{font-weight:700;font-size:13px;white-space:nowrap}
+
+/* ── INPUTS ── */
+input[type=text],input[type=date],input[type=number],select,textarea{
+  padding:8px 10px;border:1px solid var(--border);border-radius:7px;
+  font-size:13px;width:100%;outline:none;background:#fff;color:var(--text)
+}
+input:focus,select:focus,textarea:focus{border-color:var(--primary)}
+textarea{resize:vertical;height:72px}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 14px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-d)}
+.btn-ghost{background:#f3f4f6;color:#374151}.btn-ghost:hover{background:#e5e7eb}
+.btn-danger{background:#fee2e2;color:#991b1b}.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:5px;color:var(--muted);font-size:14px}
+.btn-icon:hover{background:#f3f4f6;color:var(--text)}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:560px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-h h2{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-close:hover{color:var(--text)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgroup{margin-bottom:13px}
+label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:13px}
+.empty-icon{font-size:32px;margin-bottom:8px}
+
+/* ── URL link ── */
+a.url-link{color:var(--primary);font-size:11px;text-decoration:none}
+a.url-link:hover{text-decoration:underline}
+
+/* ── Notification banner ── */
+.notif-bar{background:#1e429f;color:#fff;padding:10px 20px;font-size:13px;display:flex;align-items:center;gap:10px}
+.notif-bar button{background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px}
+
+.timeline-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-red{background:#ef4444}.dot-orange{background:#f97316}
+.dot-blue{background:#3b82f6}.dot-green{background:#10b981}.dot-purple{background:#a855f7}
+
+/* ── Progress bar ── */
+.prog-bar{height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:3px;background:var(--primary)}
+
+.section-actions{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.sep{color:var(--border)}
+
+/* ── CALENDAR ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding:6px 2px}
+.cal-cell{
+  text-align:center;padding:6px 2px;border-radius:8px;cursor:default;
+  font-size:13px;min-height:48px;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;gap:3px;padding-top:8px;
+  border:1px solid transparent;transition:.1s;
+}
+.cal-cell.has-hearing{cursor:pointer;background:#eff6ff;border-color:#bfdbfe}
+.cal-cell.has-hearing:hover{background:#dbeafe}
+.cal-cell.is-today{background:var(--primary)!important;border-color:var(--primary)!important;color:#fff;font-weight:700}
+.cal-cell.is-past{color:var(--muted)}
+.cal-cell.is-selected{outline:2px solid var(--primary);outline-offset:1px}
+.cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+.cal-dots{display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin-top:1px}
+.cal-day-item{padding:10px;border-radius:8px;margin-bottom:8px;background:#fff;border:1px solid var(--border);cursor:pointer}
+.cal-day-item:hover{background:#eff6ff;border-color:#bfdbfe}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-brand">⚖️ КешТайм CRM</span>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showSection('dashboard')">Головна</button>
+    <button class="nav-btn" onclick="showSection('cases')">Справи</button>
+    <button class="nav-btn" onclick="showSection('actions')">Дії</button>
+    <button class="nav-btn" onclick="showSection('reminders')">Нагадування</button>
+  </div>
+  <div class="nav-right">
+    <span id="alert-count" class="alert-dot" style="display:none">0</span>
+    <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;gap:6px" onclick="openModal('modal-gsheets')" title="Синхронізація з Google Sheets">
+      📊 Google Sheets
+      <span id="gs-nav-indicator" style="display:none;font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:100px"></span>
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-case')">+ Справа</button>
+    <button class="btn btn-ghost btn-sm" onclick="openModal('modal-action')">+ Дія</button>
+  </div>
+</nav>
+
+<!-- ── DASHBOARD ── -->
+<div id="section-dashboard" class="section active main">
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- Calendar card -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h">
+      <span class="card-title">📅 Календар засідань</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹ Попередній</button>
+        <span id="cal-month-label" style="font-weight:700;font-size:14px;min-width:160px;text-align:center"></span>
+        <button class="btn btn-ghost btn-sm" onclick="calNext()">Наступний ›</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+      <div id="cal-grid"></div>
+      <div id="cal-day-detail" style="background:#f9fafb;border-radius:8px;padding:14px;min-height:200px"></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Upcoming hearings -->
+    <div class="card">
+      <div class="card-h">
+        <span class="card-title">🗓 Найближчі засідання</span>
+        <span class="card-count" id="hearing-count">0</span>
+      </div>
+      <div class="rem-list" id="upcoming-hearings"></div>
+    </div>
+
+    <!-- Decisions needed -->
+    <div class="card">
+      <div class="card-h">
+        <span class="card-title">⚖️ Очікуємо рішення</span>
+        <span class="card-count" id="decision-wait-count">0</span>
+      </div>
+      <div class="rem-list" id="decision-wait-list"></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Enforcement writs needed -->
+    <div class="card">
+      <div class="card-h">
+        <span class="card-title">📜 Виконавчий лист <span style="font-size:11px;font-weight:400;color:var(--muted)">(+30 днів від рішення)</span></span>
+        <span class="card-count" id="enforcement-count">0</span>
+      </div>
+      <div id="enforcement-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto"></div>
+    </div>
+
+    <!-- Recent decisions -->
+    <div class="card">
+      <div class="card-h">
+        <span class="card-title">✅ Нещодавні рішення</span>
+        <span class="card-count" id="recent-decision-count">0</span>
+      </div>
+      <div class="rem-list" id="recent-decisions"></div>
+    </div>
+  </div>
+
+  <!-- Enforcement writs obtained — tracking -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h">
+      <span class="card-title">📋 Виконавчі листи отримано — відстеження</span>
+      <span class="card-count" id="writ-count">0</span>
+    </div>
+    <div id="writ-tracking-list"></div>
+  </div>
+
+  <!-- Legal Aid summary -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h">
+      <span class="card-title">🏛 Правова допомога — зведення по рішеннях</span>
+      <span id="legal-aid-diff-badge"></span>
+    </div>
+    <div id="legal-aid-summary"></div>
+  </div>
+</div>
+
+<!-- ── CASES ── -->
+<div id="section-cases" class="section main">
+  <div class="section-actions">
+    <span class="page-title" style="margin:0">Реєстр справ</span>
+    <span style="flex:1"></span>
+    <input type="text" id="case-search" placeholder="Пошук відповідача, суду..." style="width:260px" oninput="renderCases()">
+    <select id="case-status-filter" onchange="renderCases()" style="width:160px">
+      <option value="">Всі статуси</option>
+      <option value="new">Нова</option>
+      <option value="claim">Позов подано</option>
+      <option value="active">Засідання</option>
+      <option value="decision">Рішення</option>
+      <option value="enforcement">Виконавчий</option>
+      <option value="done">Завершено</option>
+    </select>
+    <select id="case-entity-filter" onchange="renderCases()" style="width:120px">
+      <option value="">Всі ЮО</option>
+      <option value="Адвокат">Адвокат</option>
+      <option value="Бюро">Бюро</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-case')">+ Справа</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tbl-wrap">
+      <table id="cases-table">
+        <thead>
+          <tr>
+            <th>№ ДУ</th>
+            <th>Відповідач</th>
+            <th>Суд</th>
+            <th>ЮО</th>
+            <th>Сума позову</th>
+            <th>Сума рішення</th>
+            <th>Дата рішення</th>
+            <th>Статус</th>
+            <th>Дата відкр.</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody id="cases-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── ACTIONS ── -->
+<div id="section-actions" class="section main">
+  <div class="section-actions">
+    <span class="page-title" style="margin:0">Журнал дій</span>
+    <span style="flex:1"></span>
+    <input type="text" id="action-search" placeholder="Пошук..." style="width:200px" oninput="renderActions()">
+    <select id="action-type-filter" onchange="renderActions()" style="width:150px">
+      <option value="">Всі типи</option>
+      <option value="Засідання">Засідання</option>
+      <option value="Позов">Позов</option>
+      <option value="Рішення">Рішення</option>
+      <option value="Вик.лист">Вик. лист</option>
+      <option value="Відзив">Відзив</option>
+    </select>
+    <select id="action-case-filter" onchange="renderActions()" style="width:200px">
+      <option value="">Всі справи</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-action')">+ Дія</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Дата</th>
+            <th>№ ДУ</th>
+            <th>Відповідач</th>
+            <th>Тип дії</th>
+            <th>Вартість</th>
+            <th>Сума рішення</th>
+            <th>ПД розрахунок</th>
+            <th>ПД по суду</th>
+            <th>ЮО</th>
+            <th>Документ</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="actions-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── REMINDERS ── -->
+<div id="section-reminders" class="section main">
+  <div class="page-title">Нагадування</div>
+
+  <!-- Enforcement alert banner -->
+  <div id="enf-alert-banner" style="display:none;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;margin-bottom:16px;align-items:center;gap:12px">
+    <span style="font-size:22px">⚠️</span>
+    <div style="flex:1">
+      <div style="font-weight:700;color:#991b1b;font-size:14px" id="enf-alert-title"></div>
+      <div style="font-size:12px;color:#b91c1c;margin-top:2px" id="enf-alert-sub"></div>
+    </div>
+    <button class="btn btn-sm" style="background:#dc2626;color:#fff" onclick="showSection2('reminders')">Переглянути ↓</button>
+  </div>
+
+  <!-- Enforcement full-width card -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h">
+      <span class="card-title">📜 Виконавчий лист — потрібен</span>
+      <span class="card-count" id="all-enf-count">0</span>
+    </div>
+    <div id="all-enforcement"></div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-h"><span class="card-title">🗓 Всі майбутні засідання</span><span class="card-count" id="all-hearing-count">0</span></div>
+      <div class="rem-list" id="all-hearings"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><span class="card-title">⚙️ Налаштування</span></div>
+      <div class="fgroup">
+        <label>Нагадувати про засідання за (днів)</label>
+        <input type="number" id="remind-days" value="3" min="1" max="30" onchange="saveSettings()">
+      </div>
+      <div class="fgroup">
+        <label>Термін виконавчого листа (днів після рішення)</label>
+        <input type="number" id="enforcement-days" value="30" min="1" max="365" onchange="saveSettings()">
+      </div>
+      <div class="fgroup">
+        <label>Термін рішення (днів після засідання)</label>
+        <input type="number" id="decision-days" value="30" min="1" max="365" onchange="saveSettings()">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="saveSettings();renderAll()">Зберегти</button>
+      <div style="margin-top:12px">
+        <div class="card-h" style="margin-bottom:10px"><span class="card-title">📋 Нотатки</span></div>
+        <div id="notes-list" class="rem-list"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="openModal('modal-note')">+ Нотатка</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: NEW CASE ── -->
+<div class="overlay" id="modal-case">
+  <div class="modal">
+    <div class="modal-h">
+      <h2>Нова справа</h2>
+      <button class="modal-close" onclick="closeModal('modal-case')">×</button>
+    </div>
+    <div class="form-row">
+      <div class="fgroup"><label>№ ДУ</label><input type="text" id="c-id" placeholder="напр. 48"></div>
+      <div class="fgroup"><label>ЮО</label>
+        <select id="c-entity"><option>Адвокат</option><option>Бюро</option></select>
+      </div>
+    </div>
+    <div class="fgroup"><label>Відповідач</label><input type="text" id="c-defendant" placeholder="ПІБ відповідача"></div>
+    <div class="fgroup"><label>Суд</label><input type="text" id="c-court" placeholder="Назва суду"></div>
+    <div class="form-row">
+      <div class="fgroup"><label>Сума позову (грн)</label><input type="number" id="c-claim" placeholder="0"></div>
+      <div class="fgroup"><label>Дата відкриття</label><input type="date" id="c-date"></div>
+    </div>
+    <div class="fgroup"><label>Примітка</label><textarea id="c-note" placeholder="Додаткова інформація..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-case')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveCase()">Зберегти справу</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: NEW ACTION ── -->
+<div class="overlay" id="modal-action">
+  <div class="modal">
+    <div class="modal-h">
+      <h2>Нова дія</h2>
+      <button class="modal-close" onclick="closeModal('modal-action')">×</button>
+    </div>
+    <div class="form-row">
+      <div class="fgroup"><label>Справа (ДУ)</label>
+        <select id="a-case-id" onchange="fillDefendant()"></select>
+      </div>
+      <div class="fgroup"><label>Тип дії</label>
+        <select id="a-type" onchange="toggleActionFields()">
+          <option>Засідання</option><option>Позов</option><option>Рішення</option>
+          <option>Вик.лист</option><option>Відзив</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fgroup"><label>Дата</label><input type="date" id="a-date"></div>
+      <div class="fgroup"><label>ЮО</label>
+        <select id="a-entity"><option>Адвокат</option><option>Бюро</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fgroup"><label>Вартість (грн)</label><input type="number" id="a-cost" placeholder="4000"></div>
+      <div id="a-decision-wrap" class="fgroup" style="display:none"><label>Сума рішення (грн)</label><input type="number" id="a-decision" placeholder="0"></div>
+    </div>
+    <div id="a-legal-aid-wrap" style="display:none">
+      <div class="form-row">
+        <div class="fgroup">
+          <label>ПД по факту розрахунку (грн)</label>
+          <input type="number" id="a-legal-calc" placeholder="0">
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">Сума, розрахована адвокатом/бюро</div>
+        </div>
+        <div class="fgroup">
+          <label>ПД по суду (грн)</label>
+          <input type="number" id="a-legal-court" placeholder="0">
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">Присуджено судом (якщо відрізняється)</div>
+        </div>
+      </div>
+    </div>
+    <div id="a-url-wrap" class="fgroup" style="display:none">
+      <label>Посилання на рішення (reyestr.court.gov.ua)</label>
+      <input type="text" id="a-url" placeholder="https://...">
+    </div>
+    <div class="fgroup"><label>Примітка</label><textarea id="a-note" placeholder="Додаткова інформація..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-action')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveAction()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: NOTE ── -->
+<div class="overlay" id="modal-note">
+  <div class="modal" style="width:420px">
+    <div class="modal-h">
+      <h2>Нотатка по справі</h2>
+      <button class="modal-close" onclick="closeModal('modal-note')">×</button>
+    </div>
+    <div class="fgroup"><label>Справа</label>
+      <select id="n-case"></select>
+    </div>
+    <div class="fgroup"><label>Тип нагадування</label>
+      <select id="n-type">
+        <option value="custom">Довільне</option>
+        <option value="hearing">Засідання</option>
+        <option value="decision">Рішення</option>
+        <option value="enforcement">Виконавчий</option>
+      </select>
+    </div>
+    <div class="fgroup"><label>Дедлайн (опціонально)</label><input type="date" id="n-deadline"></div>
+    <div class="fgroup"><label>Текст нотатки</label><textarea id="n-text" placeholder="Що потрібно зробити..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-note')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveNote()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: GOOGLE SHEETS SYNC ── -->
+<div class="overlay" id="modal-gsheets">
+  <div class="modal" style="width:660px">
+    <div class="modal-h">
+      <h2>📊 Підключення до Google Sheets</h2>
+      <button class="modal-close" onclick="closeModal('modal-gsheets')">×</button>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button id="gs-tab-script" onclick="gsTab('script')" style="padding:8px 16px;border:none;background:var(--primary);color:#fff;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;font-weight:600">🔗 Apps Script (авто)</button>
+      <button id="gs-tab-file" onclick="gsTab('file')" style="padding:8px 16px;border:none;background:#f3f4f6;color:#374151;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px">📁 CSV файл (ручний)</button>
+    </div>
+
+    <!-- SCRIPT TAB -->
+    <div id="gs-panel-script">
+      <div style="background:#eff6ff;border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px">① Створіть Apps Script у вашій таблиці (один раз)</div>
+        <ol style="font-size:12px;color:#374151;margin-left:16px;line-height:2.2">
+          <li>Відкрийте <a href="https://docs.google.com/spreadsheets/d/1cEygb_zKdR6eQmMwl7qZYiYfYd1lYNobopGIdB1PayA" target="_blank" style="color:var(--primary)">вашу таблицю</a></li>
+          <li>Меню <b>Розширення → Apps Script</b></li>
+          <li>Замініть весь код у редакторі на код нижче і натисніть <b>Зберегти</b></li>
+          <li><b>Розгорнути → Нове розгортання → Тип: Веб-застосунок</b></li>
+          <li>Виконувати як: <b>Я</b> &nbsp;|&nbsp; Хто має доступ: <b>Усі</b> → <b>Розгорнути</b></li>
+          <li>Скопіюйте URL розгортання та вставте нижче</li>
+        </ol>
+        <div style="background:#1e1e2e;border-radius:6px;padding:12px;margin-top:10px;position:relative">
+          <button onclick="copyScriptCode()" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,.15);border:none;color:#fff;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px">Копіювати</button>
+          <pre id="gs-script-code" style="font-size:11px;color:#a6e3a1;margin:0;white-space:pre-wrap;font-family:monospace">const TOKEN = 'crm2026secret';
+
+function doGet(e) {
+  if (!e.parameter.token || e.parameter.token !== TOKEN)
+    return ContentService.createTextOutput('Unauthorized');
+
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const result = {};
+
+  ['1_Реєстр ДУ', '2_Реєстр Дій'].forEach(name => {
+    const sh = ss.getSheetByName(name);
+    if (!sh) return;
+    result[name] = sh.getDataRange().getValues().map(row =>
+      row.map(v => v instanceof Date
+        ? Utilities.formatDate(v, 'Europe/Kiev', 'dd.MM.yyyy')
+        : String(v === null || v === undefined ? '' : v))
+    );
+  });
+
+  result.ts = new Date().toISOString();
+  const json = JSON.stringify(result);
+  const cb = e.parameter.callback;
+
+  // JSONP підтримка (для локального файлу)
+  if (cb) {
+    return ContentService
+      .createTextOutput(cb + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService
+    .createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="fgroup" style="grid-column:span 2">
+          <label>URL розгортання (Apps Script Deployment URL)</label>
+          <input type="text" id="gs-script-url" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fgroup">
+          <label>Секретний токен (з коду вище)</label>
+          <input type="text" id="gs-token" value="crm2026secret" placeholder="crm2026secret">
+        </div>
+        <div class="fgroup">
+          <label>Автооновлення при відкритті CRM</label>
+          <select id="gs-auto">
+            <option value="1">Так — оновлювати автоматично</option>
+            <option value="0">Ні — тільки вручну</option>
+          </select>
+        </div>
+      </div>
+      <div id="gs-status" style="display:none;padding:10px;border-radius:8px;font-size:13px;margin-top:4px"></div>
+    </div>
+
+    <!-- FILE TAB -->
+    <div id="gs-panel-file" style="display:none">
+      <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#374151">
+        Google Sheets → <b>Файл → Завантажити → CSV</b> для кожного аркуша окремо
+      </div>
+      <div class="fgroup">
+        <label>Файл "1_Реєстр ДУ"</label>
+        <input type="file" id="file-du" accept=".csv,.txt" style="padding:6px;border:2px dashed var(--border);border-radius:8px;font-size:12px;width:100%" onchange="onFileSelect(this,'file-du-name')">
+        <div id="file-du-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
+      </div>
+      <div class="fgroup">
+        <label>Файл "2_Реєстр Дій"</label>
+        <input type="file" id="file-actions" accept=".csv,.txt" style="padding:6px;border:2px dashed var(--border);border-radius:8px;font-size:12px;width:100%" onchange="onFileSelect(this,'file-actions-name')">
+        <div id="file-actions-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
+      </div>
+      <div id="gs-status-file" style="display:none;padding:10px;border-radius:8px;font-size:13px;margin-top:4px"></div>
+    </div>
+
+    <div class="modal-footer">
+      <div id="gs-last-sync" style="font-size:11px;color:var(--muted);flex:1"></div>
+      <button class="btn btn-ghost" onclick="closeModal('modal-gsheets')">Закрити</button>
+      <button class="btn btn-primary" id="gs-sync-btn" onclick="gsSyncClick()">🔄 Оновити дані</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: CASE DETAIL ── -->
+<div class="overlay" id="modal-case-detail">
+  <div class="modal" style="width:680px">
+    <div class="modal-h">
+      <h2 id="detail-title">Справа</h2>
+      <button class="modal-close" onclick="closeModal('modal-case-detail')">×</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+const BASE_CASES=[
+  {id:'1',court:'Малиновський районний суд м. Одеса',defendant:'Ільясов Тарлан Азерович',entity:'Адвокат',claimAmount:53999.6,startSerial:45744},
+  {id:'2',court:'Деснянський районний суд м. Києва',defendant:"Сов'як-Круковський Максим Віталійович",entity:'Адвокат',claimAmount:60300,startSerial:45744},
+  {id:'3',court:'Сихівський районний суд м. Львова',defendant:'Майоренко Олександр Миколайович',entity:'Адвокат',claimAmount:278700,startSerial:45832},
+  {id:'4',court:'Оболонський районний суд м. Києва',defendant:'Ільєнко Іван Сергійович',entity:'Адвокат',claimAmount:135200,startSerial:45861},
+  {id:'5',court:'Уманський міськрайонний суд',defendant:'Турський Богдан Олегович',entity:'Адвокат',claimAmount:46202.8,startSerial:45888},
+  {id:'6',court:'Долинський районний суд І.-Франківської обл.',defendant:'Данкович Богдан Миколайович',entity:'Адвокат',claimAmount:152925.36,startSerial:45888},
+  {id:'7',court:'Мукачівський міськрайонний суд Закарпатської обл.',defendant:'Югас Вадим Іванович',entity:'Адвокат',claimAmount:133406.92,startSerial:45895},
+  {id:'8',court:'Новозаводський районний суд м. Чернігова',defendant:'Ніженський Роман Андрійович',entity:'Адвокат',claimAmount:42245,startSerial:46029},
+  {id:'8-1',court:'Новозаводський районний суд м. Чернігова (2)',defendant:'Ніженський Роман Андрійович',entity:'Бюро',claimAmount:58269.09,startSerial:46029},
+  {id:'9',court:'Дністровський районний суд Чернівецької обл.',defendant:'Куделько Олег Олександрович',entity:'Адвокат',claimAmount:53918,startSerial:45904},
+  {id:'10',court:'Яремчанський районний суд Івано-Франківської обл.',defendant:"Бадула Мар'яна Миколаївна",entity:'Адвокат',claimAmount:87680,startSerial:45904},
+  {id:'11',court:'Деснянський районний суд м. Києва',defendant:'Барцуков Денис Станиславович',entity:'Адвокат',claimAmount:56324,startSerial:45916},
+  {id:'12',court:'Хаджибейський районний суд м. Одеса',defendant:'Чамов Олег Станіславович',entity:'Адвокат',claimAmount:20000,startSerial:45916},
+  {id:'13',court:'Хаджибейський районний суд м. Одеса (2)',defendant:'Чамов Олег Станіславович',entity:'Адвокат',claimAmount:30810.8,startSerial:45917},
+  {id:'14',court:'Сихівський районний суд м. Львова',defendant:'Вілюра Ярослав Федорович',entity:'Адвокат',claimAmount:124864.8,startSerial:45918},
+  {id:'15',court:'Чернігівський районний суд',defendant:'Пила Вадим Михайлович',entity:'Адвокат',claimAmount:51472.94,startSerial:45933},
+  {id:'16',court:'Тячівський районний суд Закарпатської обл.',defendant:'Семененко Вадим Віталійович',entity:'Адвокат',claimAmount:88725.2,startSerial:45943},
+  {id:'17',court:'Кегичівський районний суд Харківської обл.',defendant:'Ісмайлов Емін Октайович',entity:'Адвокат',claimAmount:486889.86,startSerial:45944},
+  {id:'18',court:'Києво-Святошинський суд Київської обл.',defendant:'Золюк Андрій Миколайович',entity:'Адвокат',claimAmount:70836,startSerial:45944},
+  {id:'19',court:'Тернопільський міськрайонний суд',defendant:'Балабан Володимир Васильович',entity:'Адвокат',claimAmount:62432.4,startSerial:45951},
+  {id:'20',court:'Ічнянський районний суд Чернігівської обл.',defendant:'Алексейченко Ірина Григорівна',entity:'Адвокат',claimAmount:64915.8,startSerial:45973},
+  {id:'21',court:'Лубенський районний суд Полтавської обл.',defendant:'Павленко Богдан Миколайович',entity:'Адвокат',claimAmount:149603.4,startSerial:45973},
+  {id:'22',court:'Дніпровський районний суд м. Запоріжжя',defendant:"Рум'янцев Ігор Валентинович",entity:'Адвокат',claimAmount:126181.92,startSerial:45986},
+  {id:'23',court:'Глобинський районний суд Полтавської обл.',defendant:'Селіванов Олег Миколайович',entity:'Адвокат',claimAmount:143905.02,startSerial:45987},
+  {id:'24',court:'Деснянський районний суд м. Києва',defendant:'Слізовський Олександр Анатолійович',entity:'Адвокат',claimAmount:271148.98,startSerial:46002},
+  {id:'25',court:'Млинівський районний суд Рівненської обл.',defendant:'Дедера Олександр Анатолійович',entity:'Адвокат',claimAmount:62432.4,startSerial:46002},
+  {id:'26',court:'Уманський міськрайонний суд',defendant:'Міхайліс Олександр Євгенійович',entity:'Бюро',claimAmount:67280.15,startSerial:46036},
+  {id:'27',court:'Костопільський районний суд Рівненської обл.',defendant:'Козиренко Юрій Сергійович',entity:'Бюро',claimAmount:191219.52,startSerial:46050},
+  {id:'28',court:'Соборний районний суд м. Дніпро',defendant:'Масюков Ярослав Сергійович',entity:'Бюро',claimAmount:43363.29,startSerial:46104},
+  {id:'29',court:'Переяславський міськрайонний суд Київської обл.',defendant:'Сторчак Максим Васильович',entity:'Бюро',claimAmount:127479.2,startSerial:46104},
+  {id:'30',court:'Оболонський районний суд м. Києва',defendant:'Козовенко Михайло Володимирович',entity:'Бюро',claimAmount:49669.16,startSerial:46104},
+  {id:'31',court:'Шептицький міський суд Львівської обл.',defendant:'Вітрікус Юрій Богданович',entity:'Бюро',claimAmount:483870,startSerial:46104},
+  {id:'32',court:'Києво-Святошинський суд Київської обл.',defendant:'Ремізов Андрій Вікторович',entity:'Бюро',claimAmount:153822.22,startSerial:46104},
+  {id:'33',court:'Житомирський районний суд Житомирської обл.',defendant:'Словінський Віктор Вікторович',entity:'Бюро',claimAmount:29304.89,startSerial:46104},
+  {id:'34',court:'Дніпровський районний суд Дніпропетровської обл.',defendant:'Шаповал Микола Сергійович',entity:'Бюро',claimAmount:13236.64,startSerial:46104},
+  {id:'35',court:'Шевченківський районний суд м. Полтава',defendant:'Панасенко Костянтин Олегович',entity:'Бюро',claimAmount:313462.35,startSerial:46108},
+  {id:'36',court:'Золочівський районний суд Львівської обл.',defendant:'Васильків Ігор Миколайович',entity:'Бюро',claimAmount:215732,startSerial:46113},
+  {id:'37',court:'Стрийський міськрайонний суд Львівської обл.',defendant:'Лазорко Володимир Ярославович',entity:'Бюро',claimAmount:143425.1,startSerial:46126},
+  {id:'38',court:'Голосіївський районний суд м. Києва',defendant:'Смирнов Сергій Миколайович',entity:'Бюро',claimAmount:346262.86,startSerial:46128},
+  {id:'39',court:'Шевченківський районний суд м. Львова',defendant:'Шейгец Назарій Васильович',entity:'Бюро',claimAmount:65438.65,startSerial:46133},
+  {id:'40',court:'Голосіївський районний суд м. Києва',defendant:'Голубенко Микола Володимирович',entity:'Бюро',claimAmount:75735.64,startSerial:46133},
+  {id:'41',court:'Жовківський районний суд Львівської обл.',defendant:'Вус Василь Петрович',entity:'Бюро',claimAmount:75396.77,startSerial:46133},
+  {id:'42',court:'Чечелівський районний суд м. Дніпра',defendant:'Філахтов Олексій Олександрович',entity:'Бюро',claimAmount:81517.35,startSerial:46150},
+  {id:'43',court:'Хаджибейський районний суд м. Одеса',defendant:'Левицький Денис Олександрович',entity:'Бюро',claimAmount:60159.34,startSerial:46153},
+  {id:'44',court:'Надвірнянський районний суд Івано-Франківської обл.',defendant:'Козачок Федір Павлович',entity:'Бюро',claimAmount:327719.1,startSerial:46154},
+  {id:'45',court:'Ковельський міськрайонний суд Волинської обл.',defendant:'Боровик Роман Васильович',entity:'Бюро',claimAmount:190943.37,startSerial:46154},
+  {id:'46',court:'Шевченківський районний суд м. Запоріжжя',defendant:'Приймак Олександра Сергіївна',entity:'Бюро',claimAmount:140017.32,startSerial:46154},
+  {id:'47',court:'Дарницький районний суд м. Києва',defendant:'Колотілов Олександр Олександрович',entity:'Бюро',claimAmount:514503.43,startSerial:46154},
+];
+
+const BASE_ACTIONS=[
+  // ДУ 1 — Ільясов
+  {id:'a101',caseId:'1',dateSerial:45784,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a102',caseId:'1',dateSerial:45790,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a100',caseId:'1',dateSerial:45901,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a103',caseId:'1',dateSerial:45883,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a98',caseId:'1',dateSerial:45883,type:'Вик.лист',cost:0,decisionAmount:53999.6,courtFee:3028,url:'https://reyestr.court.gov.ua/Review/129525947'},
+  {id:'a99',caseId:'1',dateSerial:45915,type:'Вик.лист',cost:0},
+  // ДУ 2 — Сов'як-Круковський
+  {id:'a21',caseId:'2',dateSerial:45817,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a22',caseId:'2',dateSerial:45817,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a23',caseId:'2',dateSerial:45903,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a24',caseId:'2',dateSerial:45925,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a25',caseId:'2',dateSerial:45971,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a26',caseId:'2',dateSerial:45999,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a27',caseId:'2',dateSerial:46070,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a28',caseId:'2',dateSerial:46083,type:'Рішення',cost:0,entity:'Бюро',decisionAmount:60300,courtFee:3028,legalAidCalculated:10000},
+  // ДУ 3 — Майоренко
+  {id:'a71',caseId:'3',dateSerial:45833,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a72',caseId:'3',dateSerial:45875,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a70',caseId:'3',dateSerial:45881,type:'Рішення',cost:0,decisionAmount:0},
+  // ДУ 4 — Ільєнко
+  {id:'a105',caseId:'4',dateSerial:45862,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a107',caseId:'4',dateSerial:45901,type:'Засідання',cost:0,entity:'Адвокат'},
+  {id:'a106',caseId:'4',dateSerial:45946,type:'Рішення',cost:0,decisionAmount:135200,courtFee:181},
+  {id:'a108',caseId:'4',dateSerial:45946,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a109',caseId:'4',dateSerial:46077,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a104',caseId:'4',dateSerial:46148,type:'Вик.лист',cost:0,decisionAmount:58560,courtFee:1311.54},
+  // ДУ 5 — Турський
+  {id:'a15',caseId:'5',dateSerial:45896,type:'Позов',cost:4000,entity:'Адвокат',procedure:'Спрощене'},
+  {id:'a16',caseId:'5',dateSerial:46099,type:'Рішення',cost:16000,decisionAmount:46202.8,courtFee:3028,url:'https://reyestr.court.gov.ua/Review/134931603'},
+  // ДУ 6 — Данкович
+  {id:'a115',caseId:'6',dateSerial:45896,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a116',caseId:'6',dateSerial:45933,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a117',caseId:'6',dateSerial:45959,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a118',caseId:'6',dateSerial:45959,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a119',caseId:'6',dateSerial:45985,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a120',caseId:'6',dateSerial:46009,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a121',caseId:'6',dateSerial:46038,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a122',caseId:'6',dateSerial:46065,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a123',caseId:'6',dateSerial:46091,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 7 — Югас
+  {id:'a1',caseId:'7',dateSerial:45898,type:'Позов',cost:4000,entity:'Адвокат',procedure:'Спрощене'},
+  {id:'a2',caseId:'7',dateSerial:45999,type:'Рішення',cost:0,decisionAmount:133406.92,courtFee:2422.4,legalAidCalculated:7000,url:'https://reyestr.court.gov.ua/Review/132390634'},
+  // ДУ 8 — Ніженський
+  {id:'a59',caseId:'8',dateSerial:46029,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a61',caseId:'8',dateSerial:46126,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a64',caseId:'8',dateSerial:46154,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a65',caseId:'8',dateSerial:46154,type:'Рішення',cost:0,decisionAmount:52838.84,courtFee:2366.07,legalAidCalculated:2000},
+  // ДУ 8-1 — Ніженський (Бюро)
+  {id:'a60',caseId:'8-1',dateSerial:46029,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a62',caseId:'8-1',dateSerial:46126,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a63',caseId:'8-1',dateSerial:46154,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a66',caseId:'8-1',dateSerial:46154,type:'Рішення',cost:0,decisionAmount:33011.8,courtFee:2366.07,legalAidCalculated:2000},
+  // ДУ 9 — Куделько
+  {id:'a75',caseId:'9',dateSerial:45909,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a77',caseId:'9',dateSerial:45966,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a78',caseId:'9',dateSerial:45988,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a79',caseId:'9',dateSerial:46015,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a76',caseId:'9',dateSerial:46016,type:'Рішення',cost:0,decisionAmount:53918,courtFee:3028,legalAidCalculated:20000,url:'https://reyestr.court.gov.ua/Review/132905333'},
+  {id:'a74',caseId:'9',dateSerial:46113,type:'Вик.лист',cost:0},
+  // ДУ 10 — Бадула
+  {id:'a146',caseId:'10',dateSerial:45909,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a148',caseId:'10',dateSerial:45939,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a149',caseId:'10',dateSerial:45957,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a150',caseId:'10',dateSerial:45972,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a151',caseId:'10',dateSerial:45993,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a152',caseId:'10',dateSerial:46010,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a153',caseId:'10',dateSerial:46048,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a147',caseId:'10',dateSerial:46058,type:'Рішення',cost:0,decisionAmount:115360,courtFee:3028,legalAidCalculated:10000,url:'https://reyestr.court.gov.ua/Review/133838596'},
+  // ДУ 11 — Барцуков
+  {id:'a136',caseId:'11',dateSerial:45918,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a137',caseId:'11',dateSerial:45973,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a138',caseId:'11',dateSerial:46042,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a139',caseId:'11',dateSerial:46104,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a140',caseId:'11',dateSerial:46104,type:'Рішення',cost:4000,decisionAmount:56324,courtFee:2422.2,url:'https://reyestr.court.gov.ua/Review/135288664'},
+  {id:'a158',caseId:'11',dateSerial:46190,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 12 — Чамов
+  {id:'a6',caseId:'12',dateSerial:45918,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a8',caseId:'12',dateSerial:46057,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a10',caseId:'12',dateSerial:46086,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a12',caseId:'12',dateSerial:46115,type:'Засідання',cost:0,entity:'Бюро'},
+  // ДУ 13 — Чамов (2)
+  {id:'a7',caseId:'13',dateSerial:45918,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a9',caseId:'13',dateSerial:46057,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a11',caseId:'13',dateSerial:46086,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a13',caseId:'13',dateSerial:46115,type:'Засідання',cost:0,entity:'Бюро'},
+  // ДУ 14 — Вілюра
+  {id:'a131',caseId:'14',dateSerial:45926,type:'Позов',cost:4000,entity:'Адвокат',procedure:'Спрощене'},
+  {id:'a132',caseId:'14',dateSerial:46078,type:'Рішення',cost:0,decisionAmount:112736,courtFee:2733.98,legalAidCalculated:1805.8,url:'https://reyestr.court.gov.ua/Review/134353441'},
+  // ДУ 15 — Пила
+  {id:'a47',caseId:'15',dateSerial:45937,type:'Позов',cost:4000,entity:'Адвокат',procedure:'Спрощене'},
+  {id:'a48',caseId:'15',dateSerial:45973,type:'Відзив',cost:4000,entity:'Адвокат'},
+  // ДУ 16 — Семененко
+  {id:'a33',caseId:'16',dateSerial:45946,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a35',caseId:'16',dateSerial:45985,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a36',caseId:'16',dateSerial:46000,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a34',caseId:'16',dateSerial:46000,type:'Рішення',cost:0,decisionAmount:88725.2,courtFee:3028,legalAidCalculated:5000,url:'https://reyestr.court.gov.ua/Review/132432100'},
+  {id:'a32',caseId:'16',dateSerial:46057,type:'Вик.лист',cost:0,entity:'Бюро'},
+  // ДУ 17 — Ісмайлов
+  {id:'a89',caseId:'17',dateSerial:45946,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a90',caseId:'17',dateSerial:45993,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a91',caseId:'17',dateSerial:46014,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a92',caseId:'17',dateSerial:46048,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a93',caseId:'17',dateSerial:46069,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a94',caseId:'17',dateSerial:46091,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a95',caseId:'17',dateSerial:46118,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a96',caseId:'17',dateSerial:46160,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a97',caseId:'17',dateSerial:46183,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 18 — Золюк
+  {id:'a110',caseId:'18',dateSerial:45946,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a111',caseId:'18',dateSerial:46118,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a112',caseId:'18',dateSerial:46218,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 19 — Балабан
+  {id:'a142',caseId:'19',dateSerial:45952,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a144',caseId:'19',dateSerial:45988,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a145',caseId:'19',dateSerial:46014,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a143',caseId:'19',dateSerial:46017,type:'Рішення',cost:0,decisionAmount:52208,courtFee:2532.01,legalAidCalculated:12000,legalAidCourt:5017.2,url:'https://reyestr.court.gov.ua/Review/132976809'},
+  {id:'a141',caseId:'19',dateSerial:46080,type:'Вик.лист',cost:0},
+  // ДУ 20 — Алексейченко
+  {id:'a154',caseId:'20',dateSerial:45973,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a156',caseId:'20',dateSerial:46041,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a157',caseId:'20',dateSerial:46069,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a155',caseId:'20',dateSerial:46069,type:'Рішення',cost:0,decisionAmount:59942.93,courtFee:2796.06,legalAidCalculated:7000},
+  // ДУ 21 — Павленко
+  {id:'a52',caseId:'21',dateSerial:45974,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a53',caseId:'21',dateSerial:46008,type:'Засідання',cost:4000,entity:'Адвокат'},
+  {id:'a54',caseId:'21',dateSerial:46043,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a55',caseId:'21',dateSerial:46077,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a56',caseId:'21',dateSerial:46106,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a57',caseId:'21',dateSerial:46135,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a58',caseId:'21',dateSerial:46183,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 22 — Рум'янцев
+  {id:'a41',caseId:'22',dateSerial:45986,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a42',caseId:'22',dateSerial:46120,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a43',caseId:'22',dateSerial:46168,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 23 — Селіванов
+  {id:'a37',caseId:'23',dateSerial:45987,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a38',caseId:'23',dateSerial:46135,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a39',caseId:'23',dateSerial:46161,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a40',caseId:'23',dateSerial:46188,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 24 — Слізовський
+  {id:'a31',caseId:'24',dateSerial:46008,type:'Позов',cost:4000,entity:'Адвокат',procedure:'Спрощене'},
+  // ДУ 25 — Дедера
+  {id:'a113',caseId:'25',dateSerial:46008,type:'Позов',cost:4000,entity:'Адвокат'},
+  {id:'a114',caseId:'25',dateSerial:46093,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 26 — Міхайліс
+  {id:'a67',caseId:'26',dateSerial:46037,type:'Позов',cost:4000,entity:'Бюро',procedure:'Спрощене'},
+  // ДУ 27 — Козиренко
+  {id:'a82',caseId:'27',dateSerial:46051,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a83',caseId:'27',dateSerial:46092,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a84',caseId:'27',dateSerial:46119,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a85',caseId:'27',dateSerial:46140,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a86',caseId:'27',dateSerial:46182,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 28 — Масюков
+  {id:'a68',caseId:'28',dateSerial:46106,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a69',caseId:'28',dateSerial:46155,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 29 — Сторчак
+  {id:'a17',caseId:'29',dateSerial:46106,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a18',caseId:'29',dateSerial:46139,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a19',caseId:'29',dateSerial:46163,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a20',caseId:'29',dateSerial:46196,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 30 — Козовенко
+  {id:'a81',caseId:'30',dateSerial:46106,type:'Позов',cost:4000,entity:'Бюро',procedure:'Спрощене'},
+  // ДУ 31 — Вітрікус
+  {id:'a128',caseId:'31',dateSerial:46106,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a129',caseId:'31',dateSerial:46140,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a130',caseId:'31',dateSerial:46146,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a127',caseId:'31',dateSerial:46148,type:'Рішення',cost:0,decisionAmount:483870,legalAidCalculated:20000},
+  // ДУ 32 — Ремізов
+  {id:'a44',caseId:'32',dateSerial:46106,type:'Позов',cost:4000,entity:'Бюро',procedure:'Спрощене'},
+  // ДУ 33 — Словінський
+  {id:'a30',caseId:'33',dateSerial:46106,type:'Позов',cost:4000,entity:'Бюро',procedure:'Спрощене'},
+  // ДУ 34 — Шаповал
+  {id:'a5',caseId:'34',dateSerial:46111,type:'Позов',cost:4000,entity:'Бюро'},
+  // ДУ 35 — Панасенко
+  {id:'a49',caseId:'35',dateSerial:46111,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a50',caseId:'35',dateSerial:46147,type:'Засідання',cost:4000,entity:'Бюро'},
+  {id:'a51',caseId:'35',dateSerial:46182,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 36 — Васильків
+  {id:'a133',caseId:'36',dateSerial:46113,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a134',caseId:'36',dateSerial:46188,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 37 — Лазорко
+  {id:'a73',caseId:'37',dateSerial:46128,type:'Позов',cost:8000,entity:'Бюро'},
+  // ДУ 38 — Смирнов
+  {id:'a29',caseId:'38',dateSerial:46128,type:'Позов',cost:8000,entity:'Бюро'},
+  // ДУ 39 — Шейгец
+  {id:'a3',caseId:'39',dateSerial:46134,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a4',caseId:'39',dateSerial:46177,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 40 — Голубенко
+  {id:'a124',caseId:'40',dateSerial:46135,type:'Позов',cost:4000,entity:'Бюро',procedure:'Спрощене'},
+  // ДУ 41 — Вус
+  {id:'a125',caseId:'41',dateSerial:46135,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a126',caseId:'41',dateSerial:46265,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 42 — Філахтов
+  {id:'a14',caseId:'42',dateSerial:46153,type:'Позов',cost:4000,entity:'Бюро'},
+  // ДУ 43 — Левицький (no actions)
+  // ДУ 44 — Козачок
+  {id:'a87',caseId:'44',dateSerial:46155,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a88',caseId:'44',dateSerial:46181,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 45 — Боровик
+  {id:'a135',caseId:'45',dateSerial:46155,type:'Позов',cost:4000,entity:'Бюро'},
+  // ДУ 46 — Приймак
+  {id:'a45',caseId:'46',dateSerial:46155,type:'Позов',cost:4000,entity:'Бюро'},
+  {id:'a46',caseId:'46',dateSerial:46188,type:'Засідання',cost:4000,entity:'Бюро'},
+  // ДУ 47 — Колотілов
+  {id:'a80',caseId:'47',dateSerial:46155,type:'Позов',cost:4000,entity:'Бюро'},
+];
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function xlDate(serial){
+  return new Date(Math.round((serial-25569)*86400)*1000);
+}
+function isoToSerial(iso){
+  const d=new Date(iso+'T00:00:00Z');
+  return Math.round(d.getTime()/86400000)+25569;
+}
+function fmtDate(serial){
+  if(!serial) return '—';
+  const d=xlDate(serial);
+  return d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function fmtMoney(n){
+  if(!n && n!==0) return '—';
+  return Number(n).toLocaleString('uk-UA',{minimumFractionDigits:0,maximumFractionDigits:0})+' грн';
+}
+function todaySerial(){
+  const d=new Date(); d.setHours(0,0,0,0);
+  return Math.round(d.getTime()/86400000)+25569;
+}
+function daysDiff(serial){
+  return Math.round(serial - todaySerial());
+}
+function daysLabel(d){
+  if(d<0) return {cls:'rb-today',txt:`${Math.abs(d)} дн. тому`};
+  if(d===0) return {cls:'rb-today',txt:'Сьогодні!'};
+  if(d<=3) return {cls:'rb-d3',txt:`Через ${d} дн.`};
+  if(d<=7) return {cls:'rb-d7',txt:`Через ${d} дн.`};
+  if(d<=14) return {cls:'rb-d14',txt:`Через ${d} дн.`};
+  return {cls:'rb-far',txt:`${fmtDate(serial)}`};
+}
+function remClass(d){
+  if(d<0) return 'rem-0';
+  if(d===0) return 'rem-0';
+  if(d<=3) return 'rem-1';
+  if(d<=7) return 'rem-2';
+  return 'rem-3';
+}
+
+// ═══════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════
+function getCases(){
+  const custom=JSON.parse(localStorage.getItem('custom_cases')||'[]').filter(Boolean);
+  const imported=JSON.parse(localStorage.getItem('gs_cases')||'[]').filter(Boolean);
+  if(!imported.length) return [...BASE_CASES,...custom];
+  const impIds=new Set(imported.map(c=>c.id));
+  return [...BASE_CASES.filter(c=>!impIds.has(c.id)),...custom,...imported];
+}
+function getActions(){
+  const custom=JSON.parse(localStorage.getItem('custom_actions')||'[]').filter(Boolean);
+  const imported=JSON.parse(localStorage.getItem('gs_actions')||'[]').filter(Boolean);
+  return [...BASE_ACTIONS,...custom,...imported];
+}
+function getNotes(){ return JSON.parse(localStorage.getItem('notes')||'[]'); }
+function getSettings(){
+  return Object.assign({remindDays:3,enforcementDays:30,decisionDays:30},
+    JSON.parse(localStorage.getItem('settings')||'{}'));
+}
+function saveSettings(){
+  const s=getSettings();
+  s.remindDays=parseInt(document.getElementById('remind-days').value)||3;
+  s.enforcementDays=parseInt(document.getElementById('enforcement-days').value)||30;
+  s.decisionDays=parseInt(document.getElementById('decision-days').value)||30;
+  localStorage.setItem('settings',JSON.stringify(s));
+}
+
+// ═══════════════════════════════════════════════════════════
+// CASE STATUS
+// ═══════════════════════════════════════════════════════════
+function caseStatus(caseId, actions){
+  const ca=actions.filter(a=>a.caseId===caseId);
+  if(!ca.length) return 'new';
+  const types=new Set(ca.map(a=>a.type));
+  if(types.has('Вик.лист')) return 'done';
+  if(types.has('Рішення')) return 'decision';
+  if(ca.some(a=>a.type==='Засідання')) return 'active';
+  if(types.has('Позов')) return 'claim';
+  return 'new';
+}
+// ── Shared helper: build enforcement list ──
+function buildEnforcementList(cases,actions,s){
+  return cases.filter(c=>{
+    const ca=actions.filter(a=>a.caseId===c.id);
+    return ca.some(a=>a.type==='Рішення') && !ca.some(a=>a.type==='Вик.лист');
+  }).map(c=>{
+    const dec=actions.filter(a=>a.caseId===c.id && a.type==='Рішення').sort((a,b)=>b.dateSerial-a.dateSerial)[0];
+    const daysSinceDec=dec ? daysDiff(dec.dateSerial)*-1 : 0;
+    const daysLeft=s.enforcementDays - daysSinceDec;
+    return {...c, decDate:dec?.dateSerial, decAmount:dec?.decisionAmount, decUrl:dec?.url, daysSinceDec, daysLeft};
+  }).sort((a,b)=>b.daysSinceDec-a.daysSinceDec);
+}
+
+// ── Render one enforcement item card ──
+function enfCard(c, overdue, s){
+  const daysText=overdue
+    ? `<span class="rem-badge rb-today">⚠️ ${c.daysSinceDec} дн. прострочено</span>`
+    : `<span class="rem-badge rb-d14">Залишилось ${c.daysLeft} дн.</span>`;
+  const urlLink=c.decUrl?` · <a class="url-link" href="${c.decUrl}" target="_blank">🔗</a>`:'';
+  return `<div class="rem ${overdue?'rem-0':'rem-purple'}" onclick="showCaseDetail('${c.id}')" style="cursor:pointer;position:relative">
+    <div class="timeline-dot ${overdue?'dot-red':'dot-purple'}"></div>
+    <div style="flex:1;min-width:0">
+      <div class="rem-name">${c.defendant}</div>
+      <div class="rem-sub">ДУ ${c.id} · Рішення від ${fmtDate(c.decDate)}${urlLink}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;white-space:nowrap;flex-shrink:0">
+      ${daysText}
+      <span style="font-size:11px;font-weight:700;color:${overdue?'#dc2626':'#7c3aed'}">${c.decAmount?fmtMoney(c.decAmount):'—'}</span>
+      <button class="btn btn-sm ${overdue?'btn-danger':'btn-ghost'}" style="font-size:11px;padding:3px 8px" onclick="addEnforcementAction(event,'${c.id}')">+ Вик. лист</button>
+    </div>
+  </div>`;
+}
+
+function addEnforcementAction(e, caseId){
+  e.stopPropagation();
+  openModal('modal-action');
+  document.getElementById('a-case-id').value=caseId;
+  document.getElementById('a-type').value='Вик.лист';
+  document.getElementById('a-date').value=new Date().toISOString().split('T')[0];
+  toggleActionFields();
+}
+
+function statusBadge(s){
+  const m={
+    new:'<span class="badge b-gray">Нова</span>',
+    claim:'<span class="badge b-blue">Позов подано</span>',
+    active:'<span class="badge b-orange">Засідання</span>',
+    decision:'<span class="badge b-yellow">Рішення</span>',
+    done:'<span class="badge b-green">Завершено</span>',
+  };
+  return m[s]||'';
+}
+function typeBadge(t){
+  const m={
+    'Засідання':'<span class="badge b-orange">Засідання</span>',
+    'Позов':'<span class="badge b-blue">Позов</span>',
+    'Рішення':'<span class="badge b-yellow">Рішення</span>',
+    'Вик.лист':'<span class="badge b-green">Вик. лист</span>',
+    'Відзив':'<span class="badge b-gray">Відзив</span>',
+  };
+  return m[t]||`<span class="badge b-gray">${t}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='cases') renderCases();
+  if(id==='actions') renderActions();
+  if(id==='reminders') renderReminders();
+}
+function showSection2(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('section-'+id).classList.add('active');
+  document.querySelector(`.nav-btn[onclick*="${id}"]`)?.classList.add('active');
+  renderReminders();
+  setTimeout(()=>document.getElementById('all-enforcement')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+// ═══════════════════════════════════════════════════════════
+// WRIT STATUS STORAGE
+// ═══════════════════════════════════════════════════════════
+const WRIT_STATUSES=[
+  {key:'obtained',  label:'Отримано',       color:'#1e40af', bg:'#dbeafe'},
+  {key:'submitted', label:'Подано до ДВС',   color:'#92400e', bg:'#fef3c7'},
+  {key:'executing', label:'Виконується',     color:'#7c3aed', bg:'#ede9fe'},
+  {key:'collected', label:'Стягнуто ✓',      color:'#065f46', bg:'#d1fae5'},
+  {key:'partial',   label:'Стягнуто частково',color:'#9a3412',bg:'#ffedd5'},
+  {key:'stopped',   label:'Зупинено',        color:'#374151', bg:'#f3f4f6'},
+];
+function getWritStatuses(){ return JSON.parse(localStorage.getItem('writ_statuses')||'{}'); }
+function setWritStatus(caseId,key,note){
+  const d=getWritStatuses();
+  d[caseId]={status:key, note:note||'', updatedAt:new Date().toISOString().split('T')[0]};
+  localStorage.setItem('writ_statuses',JSON.stringify(d));
+  renderDashboard();
+}
+function writStatusBadge(key){
+  const s=WRIT_STATUSES.find(x=>x.key===key)||WRIT_STATUSES[0];
+  return `<span style="display:inline-block;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;background:${s.bg};color:${s.color}">${s.label}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function dashSet(id,html){ const el=document.getElementById(id); if(el) el.innerHTML=html; }
+function dashText(id,txt,css){ const el=document.getElementById(id); if(el){el.textContent=txt; if(css!==undefined) el.style.cssText=css||'';} }
+
+function renderDashboard(){
+  const cases=getCases().filter(Boolean), actions=getActions().filter(Boolean), s=getSettings();
+  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
+
+  // ── Stats ──
+  try {
+    const total=cases.length;
+    const byStatus={new:0,claim:0,active:0,decision:0,done:0};
+    cases.forEach(c=>{const st=caseStatus(c.id,actions); byStatus[st]=(byStatus[st]||0)+1;});
+    const totalClaim=cases.reduce((acc,c)=>acc+(c.claimAmount||0),0);
+    const totalDecisions=actions.filter(a=>a.type==='Рішення');
+    const totalLegalAidCalc=totalDecisions.reduce((acc,a)=>acc+(a.legalAidCalculated||0),0);
+    const totalLegalAidCourt=totalDecisions.reduce((acc,a)=>acc+(a.legalAidCourt!=null?a.legalAidCourt:(a.legalAidCalculated||0)),0);
+    dashSet('stats-row',`
+      <div class="stat"><div class="stat-label">Всього справ</div><div class="stat-val c-blue">${total}</div><div class="stat-sub">у портфелі</div></div>
+      <div class="stat"><div class="stat-label">Активних</div><div class="stat-val c-orange">${byStatus.active}</div><div class="stat-sub">засідання тривають</div></div>
+      <div class="stat"><div class="stat-label">Рішення є</div><div class="stat-val c-purple">${byStatus.decision}</div><div class="stat-sub">потрібен виконавчий</div></div>
+      <div class="stat"><div class="stat-label">Завершено</div><div class="stat-val c-green">${byStatus.done}</div><div class="stat-sub">виконавчий отримано</div></div>
+      <div class="stat"><div class="stat-label">Сума позовів</div><div class="stat-val c-blue" style="font-size:18px">${(totalClaim/1e6).toFixed(1)}M</div><div class="stat-sub">грн загалом</div></div>
+      <div class="stat"><div class="stat-label">ПД розрахунок</div><div class="stat-val c-purple" style="font-size:18px">${(totalLegalAidCalc/1000).toFixed(0)}k</div><div class="stat-sub">грн запитано</div></div>
+      <div class="stat"><div class="stat-label">ПД по суду</div><div class="stat-val c-green" style="font-size:18px">${(totalLegalAidCourt/1000).toFixed(0)}k</div><div class="stat-sub">грн присуджено</div></div>
+    `);
+  } catch(e){ console.error('stats',e); }
+
+  // ── Hearings ──
+  try { renderHearingsCard(cases, actions, s, caseMap); } catch(e){ console.error('hearings',e); }
+  // ── Enforcement needed ──
+  try { renderEnfNeededCard(cases, actions, s, caseMap); } catch(e){ console.error('enf',e); }
+  // ── Await decision ──
+  try { renderAwaitDecCard(cases, actions, s, caseMap); } catch(e){ console.error('awaitDec',e); }
+  // ── Recent decisions ──
+  try { renderRecentDecCard(actions, s, caseMap); } catch(e){ console.error('recentDec',e); }
+  // ── Writ tracking ──
+  try { renderWritTrackingCard(cases, actions, caseMap); } catch(e){ console.error('writs',e); }
+  // ── Legal aid summary ──
+  try { renderLegalAidCard(actions, caseMap); } catch(e){ console.error('legalAid',e); }
+}
+
+/* ── HEARINGS card ── */
+function renderHearingsCard(cases, actions, s, caseMap){
+  const upcoming=actions
+    .filter(a=>a.type==='Засідання' && a.dateSerial)
+    .map(a=>({...a,days:daysDiff(a.dateSerial),c:caseMap[a.caseId]}))
+    .filter(a=>a.days>=0 && a.days<=60 && a.c)
+    .sort((a,b)=>a.days-b.days);
+  dashText('hearing-count', upcoming.length);
+  const urgentCount=upcoming.filter(a=>a.days<=s.remindDays).length;
+  dashText('alert-count', urgentCount, '');
+  const ac=document.getElementById('alert-count');
+  if(ac) ac.style.display=urgentCount>0?'':'none';
+  dashSet('upcoming-hearings', upcoming.length
+    ? upcoming.map(a=>{
+        const dl=daysLabel(a.days);
+        return `<div class="rem ${remClass(a.days)}" onclick="showCaseDetail('${a.caseId}')" style="cursor:pointer">
+          <div class="timeline-dot ${a.days<=3?'dot-red':a.days<=7?'dot-orange':'dot-blue'}"></div>
+          <div>
+            <div class="rem-name">${a.c.defendant}</div>
+            <div class="rem-sub">ДУ ${a.caseId} · ${a.c.court.split(' ').slice(0,4).join(' ')}</div>
+          </div>
+          <div><span class="rem-badge ${dl.cls}">${dl.txt}</span>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;text-align:center">${fmtDate(a.dateSerial)}</div></div>
+        </div>`;}).join('')
+    : '<div class="empty"><div class="empty-icon">🗓</div>Немає найближчих засідань</div>');
+}
+
+/* ── ENFORCEMENT NEEDED card ── */
+function renderEnfNeededCard(cases, actions, s, caseMap){
+  const decNoEnf=buildEnforcementList(cases, actions, s);
+  const overdue=decNoEnf.filter(c=>c.daysSinceDec>s.enforcementDays);
+  const pending=decNoEnf.filter(c=>c.daysSinceDec<=s.enforcementDays);
+  const almostDue=pending.filter(c=>c.daysLeft<=7);
+  dashText('enforcement-count', overdue.length,
+    overdue.length ? 'background:#fee2e2;color:#991b1b;font-weight:700;padding:2px 8px;border-radius:100px;font-size:12px' : '');
+  let html='';
+  if(!overdue.length && !almostDue.length){
+    html=`<div class="empty"><div class="empty-icon">✅</div>Виконавчих немає — всі в межах ${s.enforcementDays} днів</div>`;
+  } else {
+    if(overdue.length) html+=overdue.map(c=>enfCard(c,true,s)).join('');
+    if(almostDue.length) html+=`<div style="margin-top:${overdue.length?'10px':'0'};padding:8px 10px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b">
+      <div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">⏰ Термін спливає (${almostDue.length})</div>
+      ${almostDue.map(c=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0">
+        <span onclick="showCaseDetail('${c.id}')" style="cursor:pointer;color:var(--primary);font-weight:600">ДУ ${c.id} · ${(c.defendant||'').split(' ')[0]}</span>
+        <span style="color:#92400e;font-weight:700">через ${c.daysLeft} дн.</span>
+      </div>`).join('')}</div>`;
+    if(pending.length && !almostDue.length && overdue.length)
+      html+=`<div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center">+ ще ${pending.length} справ в межах терміну</div>`;
+  }
+  dashSet('enforcement-list', html);
+}
+
+/* ── AWAIT DECISION card ── */
+function renderAwaitDecCard(cases, actions, s, caseMap){
+  const awaitDec=cases.filter(c=>{
+    const ca=actions.filter(a=>a.caseId===c.id);
+    if(ca.some(a=>a.type==='Рішення')||ca.some(a=>a.type==='Вик.лист')) return false;
+    const hearings=ca.filter(a=>a.type==='Засідання' && a.dateSerial).sort((a,b)=>b.dateSerial-a.dateSerial);
+    if(!hearings.length) return false;
+    const daysAgo=daysDiff(hearings[0].dateSerial)*-1;
+    return daysAgo>=0 && daysAgo<=90;
+  }).map(c=>{
+    const lastH=actions.filter(a=>a.caseId===c.id && a.type==='Засідання' && a.dateSerial).sort((a,b)=>b.dateSerial-a.dateSerial)[0];
+    return {...c, lastHearing:lastH.dateSerial, daysAgo:daysDiff(lastH.dateSerial)*-1};
+  }).sort((a,b)=>b.daysAgo-a.daysAgo);
+  dashText('decision-wait-count', awaitDec.length);
+  dashSet('decision-wait-list', awaitDec.length
+    ? awaitDec.map(c=>{
+        const od=c.daysAgo>s.decisionDays;
+        return `<div class="rem ${od?'rem-1':'rem-def'}" onclick="showCaseDetail('${c.id}')" style="cursor:pointer">
+          <div class="timeline-dot dot-green"></div>
+          <div>
+            <div class="rem-name">${c.defendant}</div>
+            <div class="rem-sub">ДУ ${c.id} · Останнє засідання ${fmtDate(c.lastHearing)}</div>
+          </div>
+          <div><span class="rem-badge ${od?'rb-today':'rb-far'}">${c.daysAgo} дн. тому</span></div>
+        </div>`;}).join('')
+    : '<div class="empty"><div class="empty-icon">⚖️</div>Немає очікуваних рішень</div>');
+}
+
+/* ── RECENT DECISIONS card ── */
+function renderRecentDecCard(actions, s, caseMap){
+  const recentDec=actions
+    .filter(a=>a.type==='Рішення' && a.dateSerial)
+    .map(a=>({...a, c:caseMap[a.caseId], daysAgo:daysDiff(a.dateSerial)*-1}))
+    .filter(a=>a.c && a.daysAgo>=0 && a.daysAgo<=90)
+    .sort((a,b)=>a.daysAgo-b.daysAgo);
+  dashText('recent-decision-count', recentDec.length);
+  dashSet('recent-decisions', recentDec.length
+    ? recentDec.map(a=>`<div class="rem rem-def" onclick="showCaseDetail('${a.caseId}')" style="cursor:pointer">
+        <div class="timeline-dot dot-green"></div>
+        <div>
+          <div class="rem-name">${a.c.defendant}</div>
+          <div class="rem-sub">ДУ ${a.caseId} · ${fmtDate(a.dateSerial)}${a.url?` · <a class="url-link" href="${a.url}" target="_blank" onclick="event.stopPropagation()">🔗</a>`:''}</div>
+        </div>
+        <div><span class="rem-badge rb-far">${a.decisionAmount?fmtMoney(a.decisionAmount):'—'}</span></div>
+      </div>`).join('')
+    : '<div class="empty"><div class="empty-icon">📋</div>Немає нещодавніх рішень</div>');
+}
+
+/* ── WRIT TRACKING card ── */
+function renderWritTrackingCard(cases, actions, caseMap){
+  const writStatuses=getWritStatuses();
+  const writsByCaseId={};
+  actions.filter(a=>a.type==='Вик.лист' && a.dateSerial).forEach(a=>{
+    if(!writsByCaseId[a.caseId]||a.dateSerial>writsByCaseId[a.caseId].dateSerial)
+      writsByCaseId[a.caseId]=a;
+  });
+  const writCases=Object.values(writsByCaseId).map(a=>{
+    const c=caseMap[a.caseId]||{};
+    const decAct=actions.filter(x=>x.caseId===a.caseId&&x.type==='Рішення').sort((p,q)=>q.dateSerial-p.dateSerial)[0];
+    const ws=writStatuses[a.caseId]||{status:'obtained'};
+    return {
+      caseId:a.caseId, writSerial:a.dateSerial,
+      writAmount:a.decisionAmount||decAct?.decisionAmount,
+      defendant:c.defendant||'—', entity:c.entity||'—',
+      status:ws.status||'obtained', note:ws.note||'', updatedAt:ws.updatedAt||'',
+      daysSinceWrit:Math.max(0, daysDiff(a.dateSerial)*-1)
+    };
+  }).sort((a,b)=>b.daysSinceWrit-a.daysSinceWrit);
+  dashText('writ-count', writCases.length,
+    writCases.length?'background:#dbeafe;color:#1e40af;font-weight:700;padding:2px 8px;border-radius:100px;font-size:12px':'');
+  if(!writCases.length){
+    dashSet('writ-tracking-list','<div class="empty"><div class="empty-icon">📋</div>Немає виконавчих листів</div>');
+    return;
+  }
+  const rows=writCases.map(w=>{
+    const statusOpts=WRIT_STATUSES.map(st=>
+      `<option value="${st.key}"${w.status===st.key?' selected':''}>${st.label}</option>`).join('');
+    const statusInfo=WRIT_STATUSES.find(x=>x.key===w.status)||WRIT_STATUSES[0];
+    return `<tr>
+      <td style="padding:10px 12px;font-weight:700;cursor:pointer;color:var(--primary)" onclick="showCaseDetail('${w.caseId}')">ДУ ${w.caseId}</td>
+      <td style="padding:10px 12px">
+        <div style="font-weight:600;font-size:13px">${w.defendant}</div>
+        <span class="badge ${w.entity==='Адвокат'?'b-blue':'b-purple'}">${w.entity}</span>
+      </td>
+      <td style="padding:10px 12px;font-size:12px">
+        <div style="font-weight:600">${fmtDate(w.writSerial)}</div>
+        <div style="color:var(--muted);margin-top:2px">${w.daysSinceWrit} дн. тому</div>
+      </td>
+      <td style="padding:10px 12px;font-weight:700;color:#059669;white-space:nowrap">${w.writAmount?fmtMoney(w.writAmount):'—'}</td>
+      <td style="padding:10px 12px">
+        <span style="display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${statusInfo.bg};color:${statusInfo.color};cursor:pointer"
+          onclick="changeWritStatus('${w.caseId}')">${statusInfo.label} ▾</span>
+      </td>
+      <td style="padding:10px 12px">
+        <input type="text" value="${w.note.replace(/"/g,'&quot;')}" placeholder="Нотатка..."
+          style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;width:100%"
+          onchange="saveWritNote('${w.caseId}',this.value)">
+        ${w.updatedAt?`<div style="font-size:10px;color:var(--muted);margin-top:2px">оновл. ${w.updatedAt}</div>`:''}
+      </td>
+      <td style="padding:10px 12px">
+        <button class="btn-icon" onclick="addEnforcementAction(event,'${w.caseId}')" title="Додати дію">+</button>
+        <button class="btn-icon" onclick="showCaseDetail('${w.caseId}')" title="Деталі">🔍</button>
+      </td>
+    </tr>`;
+  }).join('');
+  dashSet('writ-tracking-list',`
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f9fafb">
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">ДУ</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Відповідач</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Дата вик. листа</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Сума</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Статус виконання</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Нотатка</th>
+        <th style="padding:8px 12px;border-bottom:2px solid var(--border)"></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`);
+}
+function changeWritStatus(caseId){
+  const d=getWritStatuses();
+  const cur=(d[caseId]?.status)||'obtained';
+  const idx=WRIT_STATUSES.findIndex(x=>x.key===cur);
+  const next=WRIT_STATUSES[(idx+1)%WRIT_STATUSES.length].key;
+  setWritStatus(caseId, next, d[caseId]?.note||'');
+}
+function saveWritNote(caseId, note){
+  const d=getWritStatuses();
+  const cur=d[caseId]||{status:'obtained'};
+  setWritStatus(caseId, cur.status, note);
+}
+
+/* ── LEGAL AID card ── */
+// ── Legal Aid rates (configurable per entity) ──
+function getLArates(){
+  return Object.assign(
+    {advPozov:4000, advHearing:4000, buroPozov:8000, buroHearing:8000},
+    JSON.parse(localStorage.getItem('la_rates')||'{}')
+  );
+}
+function saveLArates(){
+  const v=id=>parseFloat(document.getElementById(id)?.value)||0;
+  const r={
+    advPozov:   v('la-adv-pozov')  ||4000,
+    advHearing: v('la-adv-hearing')||4000,
+    buroPozov:  v('la-buro-pozov') ||8000,
+    buroHearing:v('la-buro-hearing')||8000,
+  };
+  localStorage.setItem('la_rates',JSON.stringify(r));
+  renderLegalAidCard(getActions(), Object.fromEntries(getCases().map(c=>[c.id,c])));
+}
+
+// Auto-calculate ПД: uses action's entity to pick correct rate
+function calcAutoLA(caseId, actions){
+  const r=getLArates();
+  return actions
+    .filter(a=>a.caseId===caseId && (a.type==='Позов'||a.type==='Засідання'))
+    .reduce((sum,a)=>{
+      const isBuro=(a.entity||'')==='Бюро';
+      if(a.type==='Позов')    return sum+(isBuro?r.buroPozov:r.advPozov);
+      if(a.type==='Засідання')return sum+(isBuro?r.buroHearing:r.advHearing);
+      return sum;
+    },0);
+}
+
+function renderLegalAidCard(actions, caseMap){
+  const r=getLArates();
+  // All cases with a decision
+  const decActions=actions.filter(a=>a.type==='Рішення').sort((a,b)=>a.dateSerial-b.dateSerial);
+  // Deduplicate — latest decision per case
+  const seen=new Set(), deduped=[];
+  [...decActions].reverse().forEach(a=>{ if(!seen.has(a.caseId)){seen.add(a.caseId);deduped.push(a);} });
+  deduped.sort((a,b)=>a.dateSerial-b.dateSerial);
+
+  // Totals
+  let totalAuto=0, totalManual=0, totalCourt=0, manualCount=0;
+  deduped.forEach(a=>{
+    const auto=calcAutoLA(a.caseId,actions);
+    totalAuto+=auto;
+    if(a.legalAidCalculated!=null){totalManual+=a.legalAidCalculated; manualCount++;}
+    totalCourt+=a.legalAidCourt!=null?a.legalAidCourt:(a.legalAidCalculated||auto);
+  });
+  const withDiscount=deduped.filter(a=>a.legalAidCourt!=null && a.legalAidCourt<(a.legalAidCalculated||calcAutoLA(a.caseId,actions)));
+
+  dashSet('legal-aid-diff-badge', withDiscount.length
+    ? `<span class="badge b-red">⚠️ ${withDiscount.length} справ зі знижкою</span>`
+    : deduped.length?`<span class="badge b-green">✓ ${deduped.length} рішень</span>`:'');
+
+  const rows=deduped.map(a=>{
+    const c=caseMap[a.caseId];
+    const auto=calcAutoLA(a.caseId,actions);
+    const manual=a.legalAidCalculated!=null?a.legalAidCalculated:null;
+    const court=a.legalAidCourt!=null?a.legalAidCourt:null;
+    const effective=manual??auto;
+    const isDiscount=court!=null && court<effective;
+    // Breakdown tooltip
+    const pozovN=actions.filter(x=>x.caseId===a.caseId&&x.type==='Позов').length;
+    const hearN=actions.filter(x=>x.caseId===a.caseId&&x.type==='Засідання').length;
+    const breakdown=`${pozovN} позов × ${fmtMoney(r.pozov)} + ${hearN} засідань × ${fmtMoney(r.hearing)}`;
+    return `<tr onclick="showCaseDetail('${a.caseId}')" style="cursor:pointer">
+      <td style="padding:9px 12px"><strong>ДУ ${a.caseId}</strong></td>
+      <td style="padding:9px 12px;font-size:12px">${c?.defendant||'—'}</td>
+      <td style="padding:9px 12px;font-size:12px;color:var(--muted)">${fmtDate(a.dateSerial)}</td>
+      <td style="padding:9px 12px">
+        <div style="font-weight:700;color:#7c3aed">${fmtMoney(auto)}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px">${breakdown}</div>
+      </td>
+      <td style="padding:9px 12px;font-weight:700;color:${manual!=null?'#1e40af':'var(--muted)'}">
+        ${manual!=null?fmtMoney(manual):'<span style="font-size:11px">не введено</span>'}
+      </td>
+      <td style="padding:9px 12px;font-weight:700;color:${court!=null?(isDiscount?'#dc2626':'#059669'):'var(--muted)'}">
+        ${court!=null?fmtMoney(court):'<span style="font-size:11px">—</span>'}
+      </td>
+      <td style="padding:9px 12px;font-size:12px">
+        ${court!=null&&effective?`<span style="color:${isDiscount?'#dc2626':'#059669'}">${isDiscount?'-':'+'}${fmtMoney(Math.abs(court-effective))} (${Math.round(court/effective*100)}%)</span>`:'—'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  dashSet('legal-aid-summary',`
+    <!-- Rates config -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="padding:10px 14px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:#1e40af;white-space:nowrap">Адвокат:</span>
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:#1e40af">
+          Позов <input type="number" id="la-adv-pozov" value="${r.advPozov}" style="width:74px;padding:3px 6px;border:1px solid #93c5fd;border-radius:6px;font-size:12px" onchange="saveLArates()"> грн
+        </label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:#1e40af">
+          Засідання <input type="number" id="la-adv-hearing" value="${r.advHearing}" style="width:74px;padding:3px 6px;border:1px solid #93c5fd;border-radius:6px;font-size:12px" onchange="saveLArates()"> грн
+        </label>
+      </div>
+      <div style="padding:10px 14px;background:#ede9fe;border-radius:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:#5b21b6;white-space:nowrap">Бюро:</span>
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:#5b21b6">
+          Позов <input type="number" id="la-buro-pozov" value="${r.buroPozov}" style="width:74px;padding:3px 6px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px" onchange="saveLArates()"> грн
+        </label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:#5b21b6">
+          Засідання <input type="number" id="la-buro-hearing" value="${r.buroHearing}" style="width:74px;padding:3px 6px;border:1px solid #c4b5fd;border-radius:6px;font-size:12px" onchange="saveLArates()"> грн
+        </label>
+      </div>
+    </div>
+    <!-- Summary stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+      <div style="background:#ede9fe;border-radius:8px;padding:12px">
+        <div class="stat-label" style="color:#5b21b6">Авто-розрахунок</div>
+        <div style="font-size:18px;font-weight:800;color:#7c3aed">${fmtMoney(totalAuto)}</div>
+        <div style="font-size:10px;color:#7c3aed;margin-top:2px">${deduped.length} справ</div>
+      </div>
+      <div style="background:#dbeafe;border-radius:8px;padding:12px">
+        <div class="stat-label" style="color:#1e40af">Введено вручну</div>
+        <div style="font-size:18px;font-weight:800;color:#1e40af">${fmtMoney(totalManual)}</div>
+        <div style="font-size:10px;color:#1e40af;margin-top:2px">${manualCount} справ</div>
+      </div>
+      <div style="background:#d1fae5;border-radius:8px;padding:12px">
+        <div class="stat-label" style="color:#065f46">Присуджено судом</div>
+        <div style="font-size:18px;font-weight:800;color:#059669">${fmtMoney(totalCourt)}</div>
+      </div>
+      <div style="background:${totalCourt<totalAuto?'#fee2e2':'#f0fdf4'};border-radius:8px;padding:12px">
+        <div class="stat-label" style="color:${totalCourt<totalAuto?'#991b1b':'#065f46'}">Різниця</div>
+        <div style="font-size:18px;font-weight:800;color:${totalCourt<totalAuto?'#dc2626':'#059669'}">${totalCourt>totalAuto?'+':''}${fmtMoney(totalCourt-totalAuto)}</div>
+      </div>
+    </div>
+    ${rows?`<div class="tbl-wrap"><table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#f9fafb">
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">ДУ</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Відповідач</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Дата рішення</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#7c3aed;border-bottom:2px solid var(--border)">Авто-розрахунок</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#1e40af;border-bottom:2px solid var(--border)">Введено вручну</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:#059669;border-bottom:2px solid var(--border)">По суду</th>
+        <th style="padding:8px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);border-bottom:2px solid var(--border)">Різниця</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`:'<div class="empty">Немає рішень</div>'}
+  `);
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// CASES TABLE
+// ═══════════════════════════════════════════════════════════
+function renderCases(){
+  const cases=getCases(), actions=getActions();
+  const search=document.getElementById('case-search').value.toLowerCase();
+  const statusF=document.getElementById('case-status-filter').value;
+  const entityF=document.getElementById('case-entity-filter').value;
+
+  let list=cases.map(c=>({...c,status:caseStatus(c.id,actions)}));
+  if(search) list=list.filter(c=>c.defendant.toLowerCase().includes(search)||c.court.toLowerCase().includes(search)||c.id.includes(search));
+  if(statusF) list=list.filter(c=>c.status===statusF);
+  if(entityF) list=list.filter(c=>c.entity===entityF);
+
+  // Enrich with decision amounts
+  list=list.map(c=>{
+    const dec=actions.filter(a=>a.caseId===c.id && a.type==='Рішення').sort((a,b)=>b.dateSerial-a.dateSerial)[0];
+    return {...c,decAmount:dec?.decisionAmount,decSerial:dec?.dateSerial};
+  });
+
+  document.getElementById('cases-tbody').innerHTML=list.length
+    ? list.map(c=>`<tr>
+        <td><strong>ДУ ${c.id}</strong></td>
+        <td>
+          <div class="td-name" style="cursor:pointer;color:var(--primary)" onclick="showCaseDetail('${c.id}')">${c.defendant}</div>
+        </td>
+        <td><div style="font-size:12px;max-width:220px">${c.court}</div></td>
+        <td><span class="badge ${c.entity==='Адвокат'?'b-blue':'b-purple'}">${c.entity}</span></td>
+        <td class="td-amt">${fmtMoney(c.claimAmount)}</td>
+        <td class="td-amt ${c.decAmount>0?'c-green':''}">${c.decAmount!=null?fmtMoney(c.decAmount):'—'}</td>
+        <td style="font-size:12px;${c.decSerial?'font-weight:600':'color:var(--muted)'}">${c.decSerial?fmtDate(c.decSerial):'—'}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td style="font-size:12px;color:var(--muted)">${fmtDate(c.startSerial)}</td>
+        <td>
+          <button class="btn-icon" onclick="showCaseDetail('${c.id}')" title="Переглянути">🔍</button>
+          <button class="btn-icon" onclick="openAddAction('${c.id}')" title="Додати дію">+</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="10"><div class="empty"><div class="empty-icon">🔍</div>Нічого не знайдено</div></td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACTIONS TABLE
+// ═══════════════════════════════════════════════════════════
+function renderActions(){
+  const cases=getCases(), actions=getActions();
+  const search=document.getElementById('action-search').value.toLowerCase();
+  const typeF=document.getElementById('action-type-filter').value;
+  const caseF=document.getElementById('action-case-filter').value;
+  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
+
+  // populate case filter
+  const caseSelect=document.getElementById('action-case-filter');
+  if(caseSelect.options.length<=1){
+    cases.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c.id; o.textContent=`ДУ ${c.id} — ${c.defendant.split(' ')[0]}`;
+      caseSelect.appendChild(o);
+    });
+  }
+
+  let list=[...actions].sort((a,b)=>b.dateSerial-a.dateSerial);
+  if(search) list=list.filter(a=>{
+    const c=caseMap[a.caseId];
+    return (c?.defendant||'').toLowerCase().includes(search)||(a.type||'').toLowerCase().includes(search)||(a.caseId||'').includes(search);
+  });
+  if(typeF) list=list.filter(a=>a.type===typeF);
+  if(caseF) list=list.filter(a=>a.caseId===caseF);
+
+  document.getElementById('actions-tbody').innerHTML=list.length
+    ? list.map(a=>{
+        const c=caseMap[a.caseId];
+        const custom=!a.id.startsWith('a');
+        return `<tr>
+          <td style="white-space:nowrap;font-size:12px">${fmtDate(a.dateSerial)}</td>
+          <td><strong>ДУ ${a.caseId}</strong></td>
+          <td><div style="font-size:12px">${c?.defendant||'—'}</div></td>
+          <td>${typeBadge(a.type)}</td>
+          <td style="font-size:12px">${a.cost?fmtMoney(a.cost):'—'}</td>
+          <td class="${a.decisionAmount>0?'c-green':''}" style="font-size:12px;font-weight:600">${a.decisionAmount!=null?fmtMoney(a.decisionAmount):'—'}</td>
+          <td style="font-size:12px">${a.legalAidCalculated!=null?`<span style="color:#7c3aed;font-weight:600">${fmtMoney(a.legalAidCalculated)}</span>`:'—'}</td>
+          <td style="font-size:12px">${a.legalAidCourt!=null?`<span style="color:${a.legalAidCourt<(a.legalAidCalculated||0)?'#dc2626':'#059669'};font-weight:600">${fmtMoney(a.legalAidCourt)}</span>`:(a.legalAidCalculated!=null?`<span style="color:#059669;font-size:11px">= розрахунок</span>`:'—')}</td>
+          <td><span class="badge ${a.entity==='Адвокат'?'b-blue':a.entity==='Бюро'?'b-purple':'b-gray'}">${a.entity||'—'}</span></td>
+          <td>${a.url?`<a class="url-link" href="${a.url}" target="_blank">🔗 Рішення</a>`:a.note?`<span style="font-size:11px;color:var(--muted)">${a.note.substring(0,30)}…</span>`:'—'}</td>
+          <td>${custom?`<button class="btn-icon" onclick="deleteAction('${a.id}')" title="Видалити">🗑</button>`:'&nbsp;'}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="9"><div class="empty"><div class="empty-icon">📋</div>Немає дій</div></td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// REMINDERS SECTION
+// ═══════════════════════════════════════════════════════════
+function renderReminders(){
+  const s=getSettings();
+  const rdEl=document.getElementById('remind-days');
+  const edEl=document.getElementById('enforcement-days');
+  const ddEl=document.getElementById('decision-days');
+  if(rdEl) rdEl.value=s.remindDays;
+  if(edEl) edEl.value=s.enforcementDays;
+  if(ddEl) ddEl.value=s.decisionDays;
+
+  const cases=getCases(), actions=getActions();
+  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
+
+  // All future hearings
+  const allH=actions
+    .filter(a=>a.type==='Засідання' && a.dateSerial && daysDiff(a.dateSerial)>=0)
+    .map(a=>({...a,days:daysDiff(a.dateSerial),c:caseMap[a.caseId]}))
+    .filter(a=>a.c)
+    .sort((a,b)=>a.days-b.days);
+
+  document.getElementById('all-hearing-count').textContent=allH.length;
+  document.getElementById('all-hearings').innerHTML=allH.map(a=>{
+    const dl=daysLabel(a.days);
+    return `<div class="rem ${remClass(a.days)}" onclick="showCaseDetail('${a.caseId}')" style="cursor:pointer">
+      <div class="timeline-dot ${a.days<=3?'dot-red':a.days<=7?'dot-orange':'dot-blue'}"></div>
+      <div>
+        <div class="rem-name">${a.c.defendant}</div>
+        <div class="rem-sub">ДУ ${a.caseId} · ${fmtDate(a.dateSerial)}</div>
+      </div>
+      <span class="rem-badge ${dl.cls}">${dl.txt}</span>
+    </div>`;
+  }).join('')||'<div class="empty">Немає майбутніх засідань</div>';
+
+  // All enforcement needed — full expanded view
+  const allEnf=buildEnforcementList(cases,actions,s);
+  const enfOverdue=allEnf.filter(c=>c.daysSinceDec>s.enforcementDays);
+  const enfPending=allEnf.filter(c=>c.daysSinceDec<=s.enforcementDays);
+
+  document.getElementById('all-enf-count').textContent=allEnf.length;
+  // Alert badge on count
+  const enfCountEl=document.getElementById('all-enf-count');
+  enfCountEl.style.cssText=enfOverdue.length?'background:#fee2e2;color:#991b1b;font-weight:700;padding:2px 10px;border-radius:100px;font-size:12px':'';
+
+  // Alert banner
+  const banner=document.getElementById('enf-alert-banner');
+  if(banner){
+    if(enfOverdue.length){
+      banner.style.cssText=banner.style.cssText.replace(/display:[^;]+;?/g,'');
+      banner.style.display='flex';
+      document.getElementById('enf-alert-title').textContent=`${enfOverdue.length} справ — виконавчий лист прострочено більше ${s.enforcementDays} днів!`;
+      document.getElementById('enf-alert-sub').textContent=
+        enfOverdue.slice(0,3).map(c=>`ДУ ${c.id} · ${(c.defendant||'').split(' ')[0]} — ${c.daysSinceDec} днів`).join(' · ');
+    } else {
+      banner.style.display='none';
+    }
+  }
+
+  // Render table-style expanded list
+  if(!allEnf.length){
+    document.getElementById('all-enforcement').innerHTML='<div class="empty"><div class="empty-icon">✅</div>Всі виконавчі отримано</div>';
+  } else {
+    let html='';
+    if(enfOverdue.length){
+      html+=`<div style="background:#fee2e2;border-radius:8px;padding:10px 14px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:8px">⚠️ ПРОСТРОЧЕНО — ${enfOverdue.length} справ (більше ${s.enforcementDays} днів без виконавчого)</div>
+        <div style="display:flex;flex-direction:column;gap:6px">${enfOverdue.map(c=>enfCard(c,true,s)).join('')}</div>
+      </div>`;
+    }
+    if(enfPending.length){
+      html+=`<div style="background:#faf5ff;border-radius:8px;padding:10px 14px">
+        <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:8px">⏳ ОЧІКУЄТЬСЯ — ${enfPending.length} справ (в межах ${s.enforcementDays} днів)</div>
+        <div style="display:flex;flex-direction:column;gap:6px">${enfPending.map(c=>enfCard(c,false,s)).join('')}</div>
+      </div>`;
+    }
+    document.getElementById('all-enforcement').innerHTML=html;
+  }
+
+  // Notes
+  const notes=getNotes();
+  document.getElementById('notes-list').innerHTML=notes.length
+    ? notes.map((n,i)=>{
+        const c=caseMap[n.caseId];
+        const past=n.deadline && isoToSerial(n.deadline)<todaySerial();
+        return `<div class="rem ${past?'rem-0':'rem-def'}">
+          <div class="timeline-dot dot-${past?'red':'green'}"></div>
+          <div style="flex:1">
+            <div class="rem-name">ДУ ${n.caseId} — ${c?.defendant||'?'}</div>
+            <div class="rem-sub">${n.text}</div>
+            ${n.deadline?`<div style="font-size:11px;margin-top:2px;color:${past?'#dc2626':'var(--muted)'}">🗓 ${n.deadline}</div>`:''}
+          </div>
+          <button class="btn-icon" onclick="deleteNote(${i})">🗑</button>
+        </div>`;
+      }).join('')
+    : '<div class="empty" style="padding:16px">Немає нотаток</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// CASE DETAIL MODAL
+// ═══════════════════════════════════════════════════════════
+function showCaseDetail(caseId){
+  const cases=getCases(), actions=getActions();
+  const c=cases.find(x=>x.id===caseId);
+  if(!c) return;
+  const ca=actions.filter(a=>a.caseId===caseId).sort((a,b)=>b.dateSerial-a.dateSerial);
+  const status=caseStatus(caseId,actions);
+
+  const autoLA=calcAutoLA(caseId,actions);
+  const decAct=ca.find(a=>a.type==='Рішення');
+  const r=getLArates();
+  const pozovN=ca.filter(a=>a.type==='Позов').length;
+  const hearN=ca.filter(a=>a.type==='Засідання').length;
+
+  document.getElementById('detail-title').textContent=`ДУ ${c.id} — ${c.defendant}`;
+  document.getElementById('detail-content').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><div class="stat-label">Суд</div><div style="font-size:13px;margin-top:2px">${c.court}</div></div>
+      <div><div class="stat-label">ЮО</div><span class="badge ${c.entity==='Адвокат'?'b-blue':'b-purple'}" style="margin-top:4px">${c.entity}</span></div>
+      <div><div class="stat-label">Сума позову</div><div style="font-weight:700;font-size:16px;margin-top:2px">${fmtMoney(c.claimAmount)}</div></div>
+      <div><div class="stat-label">Статус</div><div style="margin-top:4px">${statusBadge(status)}</div></div>
+      <div><div class="stat-label">Дата відкриття</div><div style="font-size:13px;margin-top:2px">${fmtDate(c.startSerial)}</div></div>
+      ${c.note?`<div><div class="stat-label">Примітка</div><div style="font-size:13px;margin-top:2px">${c.note}</div></div>`:''}
+    </div>
+
+    <!-- ПД block -->
+    <div style="background:#f5f3ff;border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Правова допомога</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--muted)">Авто-розрахунок</div>
+          <div style="font-size:15px;font-weight:800;color:#7c3aed">${fmtMoney(autoLA)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${(()=>{
+            const advP=ca.filter(a=>a.type==='Позов'&&a.entity!=='Бюро').length;
+            const advH=ca.filter(a=>a.type==='Засідання'&&a.entity!=='Бюро').length;
+            const burP=ca.filter(a=>a.type==='Позов'&&a.entity==='Бюро').length;
+            const burH=ca.filter(a=>a.type==='Засідання'&&a.entity==='Бюро').length;
+            const parts=[];
+            if(advP||advH) parts.push(`Адв: ${advP}п+${advH}з`);
+            if(burP||burH) parts.push(`Бюро: ${burP}п+${burH}з`);
+            return parts.join(' · ');
+          })()}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted)">Введено вручну</div>
+          <div style="font-size:15px;font-weight:800;color:#1e40af">${decAct?.legalAidCalculated!=null?fmtMoney(decAct.legalAidCalculated):'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted)">По суду</div>
+          <div style="font-size:15px;font-weight:800;color:${decAct?.legalAidCourt!=null?(decAct.legalAidCourt<autoLA?'#dc2626':'#059669'):'var(--muted)'}">
+            ${decAct?.legalAidCourt!=null?fmtMoney(decAct.legalAidCourt):'—'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Хронологія дій (${ca.length})</div>
+    <div style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto">
+      ${ca.map(a=>`<div style="display:grid;grid-template-columns:100px auto 1fr auto;gap:8px;align-items:center;padding:8px;border-radius:7px;background:#f9fafb;font-size:12px">
+        <span style="color:var(--muted)">${fmtDate(a.dateSerial)}</span>
+        ${typeBadge(a.type)}
+        <div>
+          ${(a.type==='Позов'||a.type==='Засідання')?`<span style="color:#7c3aed;font-size:11px">ПД +${fmtMoney((a.entity==='Бюро')?(a.type==='Позов'?r.buroPozov:r.buroHearing):(a.type==='Позов'?r.advPozov:r.advHearing))}</span>`:''}
+          ${a.decisionAmount!=null?`<span style="font-weight:700;color:#059669;margin-left:4px">${fmtMoney(a.decisionAmount)}</span>`:''}
+          ${a.courtFee?`<span style="color:var(--muted);margin-left:6px">збір: ${fmtMoney(a.courtFee)}</span>`:''}
+          ${a.url?`<a class="url-link" href="${a.url}" target="_blank" style="margin-left:6px">🔗</a>`:''}
+          ${a.note&&!a.url?`<span style="color:var(--muted)">${a.note.substring(0,50)}</span>`:''}
+        </div>
+        <span style="color:var(--muted);font-size:11px">${a.entity||''}</span>
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="openAddAction('${caseId}');closeModal('modal-case-detail')">+ Додати дію</button>
+    </div>
+  `;
+  openModal('modal-case-detail');
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='modal-action'||id==='modal-note'){
+    const cases=getCases();
+    const sel=document.getElementById(id==='modal-action'?'a-case-id':'n-case');
+    sel.innerHTML=cases.map(c=>`<option value="${c.id}">ДУ ${c.id} — ${c.defendant.split(' ').slice(0,2).join(' ')}</option>`).join('');
+  }
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function openAddAction(caseId){
+  openModal('modal-action');
+  document.getElementById('a-case-id').value=caseId;
+  document.getElementById('a-date').value=new Date().toISOString().split('T')[0];
+  toggleActionFields();
+}
+
+function toggleActionFields(){
+  const t=document.getElementById('a-type').value;
+  const needsDecision=t==='Рішення'||t==='Вик.лист';
+  document.getElementById('a-decision-wrap').style.display=needsDecision?'':'none';
+  document.getElementById('a-legal-aid-wrap').style.display=t==='Рішення'?'':'none';
+  document.getElementById('a-url-wrap').style.display=t==='Рішення'?'':'none';
+}
+
+function saveCase(){
+  const id=document.getElementById('c-id').value.trim();
+  const defendant=document.getElementById('c-defendant').value.trim();
+  const court=document.getElementById('c-court').value.trim();
+  if(!id||!defendant||!court){alert('Заповніть обовʼязкові поля: №, відповідач, суд');return;}
+  const cases=JSON.parse(localStorage.getItem('custom_cases')||'[]');
+  const dateStr=document.getElementById('c-date').value;
+  cases.push({
+    id, defendant, court,
+    entity:document.getElementById('c-entity').value,
+    claimAmount:parseFloat(document.getElementById('c-claim').value)||0,
+    startSerial:dateStr?isoToSerial(dateStr):todaySerial(),
+    note:document.getElementById('c-note').value,
+    custom:true
+  });
+  localStorage.setItem('custom_cases',JSON.stringify(cases));
+  closeModal('modal-case');
+  renderAll();
+  // reset
+  ['c-id','c-defendant','c-court','c-claim','c-note'].forEach(f=>document.getElementById(f).value='');
+}
+
+function saveAction(){
+  const caseId=document.getElementById('a-case-id').value;
+  const type=document.getElementById('a-type').value;
+  const dateStr=document.getElementById('a-date').value;
+  if(!caseId||!dateStr){alert('Вкажіть справу та дату');return;}
+  const actions=JSON.parse(localStorage.getItem('custom_actions')||'[]');
+  actions.push({
+    id:'u'+Date.now(),
+    caseId, type,
+    dateSerial:isoToSerial(dateStr),
+    cost:parseFloat(document.getElementById('a-cost').value)||0,
+    entity:document.getElementById('a-entity').value,
+    decisionAmount:parseFloat(document.getElementById('a-decision').value)||undefined,
+    legalAidCalculated:parseFloat(document.getElementById('a-legal-calc').value)||undefined,
+    legalAidCourt:parseFloat(document.getElementById('a-legal-court').value)||undefined,
+    url:document.getElementById('a-url').value.trim()||undefined,
+    note:document.getElementById('a-note').value.trim()||undefined,
+    custom:true
+  });
+  localStorage.setItem('custom_actions',JSON.stringify(actions));
+  closeModal('modal-action');
+  renderAll();
+  ['a-cost','a-decision','a-legal-calc','a-legal-court','a-url','a-note'].forEach(f=>document.getElementById(f).value='');
+}
+
+function deleteAction(id){
+  if(!confirm('Видалити цю дію?')) return;
+  const actions=JSON.parse(localStorage.getItem('custom_actions')||'[]');
+  localStorage.setItem('custom_actions',JSON.stringify(actions.filter(a=>a.id!==id)));
+  renderAll();
+}
+
+function saveNote(){
+  const caseId=document.getElementById('n-case').value;
+  const text=document.getElementById('n-text').value.trim();
+  if(!caseId||!text){alert('Вкажіть справу та текст нотатки');return;}
+  const notes=getNotes();
+  notes.push({
+    caseId,type:document.getElementById('n-type').value,
+    deadline:document.getElementById('n-deadline').value||null,
+    text
+  });
+  localStorage.setItem('notes',JSON.stringify(notes));
+  closeModal('modal-note');
+  renderReminders();
+  ['n-text','n-deadline'].forEach(f=>document.getElementById(f).value='');
+}
+
+function deleteNote(i){
+  if(!confirm('Видалити нотатку?')) return;
+  const notes=getNotes(); notes.splice(i,1);
+  localStorage.setItem('notes',JSON.stringify(notes));
+  renderReminders();
+}
+
+function fillDefendant(){} // reserved
+
+function renderAll(){
+  renderDashboard();
+  renderCalendar();
+  if(document.getElementById('section-cases').classList.contains('active')) renderCases();
+  if(document.getElementById('section-actions').classList.contains('active')) renderActions();
+  if(document.getElementById('section-reminders').classList.contains('active')) renderReminders();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CALENDAR
+// ═══════════════════════════════════════════════════════════
+const MONTHS=['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const DOWS=['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+let _calYear, _calMonth, _calSelected=null;
+
+function calInit(){
+  const n=new Date();
+  _calYear=n.getFullYear(); _calMonth=n.getMonth();
+  renderCalendar();
+}
+function calPrev(){ _calMonth--; if(_calMonth<0){_calMonth=11;_calYear--;} _calSelected=null; renderCalendar(); }
+function calNext(){ _calMonth++; if(_calMonth>11){_calMonth=0;_calYear++;} _calSelected=null; renderCalendar(); }
+
+function renderCalendar(){
+  const actions=getActions(), cases=getCases();
+  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayY=today.getFullYear(), todayM=today.getMonth(), todayD=today.getDate();
+
+  // Collect hearings for this month
+  const hearingsByDay={};
+  actions
+    .filter(a=>a.type==='Засідання' && a.dateSerial)
+    .forEach(a=>{
+      const d=xlDate(Math.floor(a.dateSerial));
+      if(d.getFullYear()===_calYear && d.getMonth()===_calMonth){
+        const day=d.getDate();
+        if(!hearingsByDay[day]) hearingsByDay[day]=[];
+        hearingsByDay[day].push({...a,c:caseMap[a.caseId],date:d});
+      }
+    });
+
+  // Month label
+  document.getElementById('cal-month-label').textContent=`${MONTHS[_calMonth]} ${_calYear}`;
+
+  // First weekday (Mon=0)
+  const firstDow=(new Date(_calYear,_calMonth,1).getDay()+6)%7;
+  const daysInMonth=new Date(_calYear,_calMonth+1,0).getDate();
+  const isCurrentMonth=_calYear===todayY && _calMonth===todayM;
+
+  let html='<div class="cal-grid">';
+  DOWS.forEach(d=>{ html+=`<div class="cal-dow">${d}</div>`; });
+
+  // Empty leading cells
+  for(let i=0;i<firstDow;i++) html+='<div class="cal-cell"></div>';
+
+  for(let d=1;d<=daysInMonth;d++){
+    const isToday=isCurrentMonth && d===todayD;
+    const isPast=_calYear<todayY||((_calYear===todayY)&&(_calMonth<todayM||(isCurrentMonth&&d<todayD)));
+    const h=hearingsByDay[d]||[];
+    const hasH=h.length>0;
+    const isSelected=_calSelected===d;
+    let cls='cal-cell';
+    if(hasH) cls+=' has-hearing';
+    if(isToday) cls+=' is-today';
+    if(isPast) cls+=' is-past';
+    if(isSelected) cls+=' is-selected';
+
+    // Dot colors: red if past, orange if today/1-3 days, blue if future
+    const dots=h.slice(0,4).map(()=>{
+      let col=isPast?'#ef4444':isToday?'#f97316':daysDiff(h[0].dateSerial)<=3?'#f97316':'#3b82f6';
+      return `<span class="cal-dot" style="background:${isToday?'rgba(255,255,255,0.8)':col}"></span>`;
+    }).join('');
+
+    html+=`<div class="${cls}" onclick="${hasH?`calSelectDay(${d})`:''}">
+      <span>${d}</span>
+      ${hasH?`<div class="cal-dots">${dots}${h.length>4?`<span style="font-size:9px;color:${isToday?'rgba(255,255,255,.8)':'var(--muted)'}">+${h.length-4}</span>`:''}</div>`:''}
+    </div>`;
+  }
+  html+='</div>';
+  document.getElementById('cal-grid').innerHTML=html;
+
+  // Auto-show: today if has hearings, else selected day, else nearest future day
+  const showDay=_calSelected || (isCurrentMonth && hearingsByDay[todayD] ? todayD : null) ||
+    Object.keys(hearingsByDay).map(Number).filter(d=>!(_calYear===todayY&&_calMonth===todayM&&d<todayD)).sort((a,b)=>a-b)[0];
+
+  if(showDay) calShowDay(showDay, hearingsByDay);
+  else calShowMonthSummary(hearingsByDay);
+}
+
+function calSelectDay(d){
+  _calSelected=(_calSelected===d)?null:d;
+  renderCalendar();
+}
+
+function calShowDay(day, hearingsByDay){
+  const h=hearingsByDay[day]||[];
+  const today=new Date(); today.setHours(0,0,0,0);
+  const cellDate=new Date(_calYear,_calMonth,day); cellDate.setHours(0,0,0,0);
+  const daysFromNow=Math.round((cellDate-today)/86400000);
+
+  let urgency='';
+  if(daysFromNow<0) urgency=`<span class="badge b-gray">${Math.abs(daysFromNow)} дн. тому</span>`;
+  else if(daysFromNow===0) urgency=`<span class="badge b-red">Сьогодні!</span>`;
+  else if(daysFromNow<=3) urgency=`<span class="badge b-red">Через ${daysFromNow} дн.</span>`;
+  else if(daysFromNow<=7) urgency=`<span class="badge b-yellow">Через ${daysFromNow} дн.</span>`;
+  else urgency=`<span class="badge b-blue">Через ${daysFromNow} дн.</span>`;
+
+  document.getElementById('cal-day-detail').innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:14px;font-weight:700">${day} ${MONTHS[_calMonth]}</span>
+      ${urgency}
+    </div>
+    ${h.length
+      ? h.map(a=>`<div class="cal-day-item" onclick="showCaseDetail('${a.caseId}')">
+          <div style="font-size:13px;font-weight:700">${a.c?.defendant||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">ДУ ${a.caseId}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">${a.c?.court||''}</div>
+          <div style="margin-top:5px;display:flex;gap:6px;align-items:center">
+            <span class="badge ${a.c?.entity==='Адвокат'?'b-blue':'b-purple'}">${a.c?.entity||''}</span>
+            ${a.c?.claimAmount?`<span style="font-size:11px;color:var(--muted)">Позов: ${fmtMoney(a.c.claimAmount)}</span>`:''}
+          </div>
+        </div>`).join('')
+      : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:24px 0">Немає засідань</div>'
+    }
+  `;
+}
+
+function calShowMonthSummary(hearingsByDay){
+  const allH=Object.entries(hearingsByDay).sort((a,b)=>+a[0]-+b[0]);
+  document.getElementById('cal-day-detail').innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px">ВСЬОГО В МІСЯЦІ: ${allH.reduce((s,[,h])=>s+h.length,0)} засідань</div>
+    ${allH.map(([day,h])=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="calSelectDay(${day})">
+        <span style="font-weight:700;font-size:13px;min-width:28px">${day}</span>
+        <div style="flex:1">${h.map(a=>`<div style="font-size:12px">${a.c?.defendant||'—'} <span style="color:var(--muted);font-size:11px">(ДУ ${a.caseId})</span></div>`).join('')}</div>
+      </div>`).join('')||'<div style="color:var(--muted);font-size:12px;text-align:center;padding:24px 0">Засідань немає</div>'}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BROWSER NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════
+function requestNotifications(){
+  if('Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission().then(p=>{
+      if(p==='granted') scheduleNotifications();
+    });
+  } else if(Notification.permission==='granted'){
+    scheduleNotifications();
+  }
+}
+function scheduleNotifications(){
+  const s=getSettings();
+  const actions=getActions(), cases=getCases();
+  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
+
+  // Upcoming hearings
+  const urgent=actions
+    .filter(a=>a.type==='Засідання' && a.dateSerial)
+    .map(a=>({...a,days:daysDiff(a.dateSerial),c:caseMap[a.caseId]}))
+    .filter(a=>a.days>=0 && a.days<=s.remindDays && a.c);
+  if(urgent.length>0){
+    new Notification(`⚖️ ${urgent.length} засідань найближчі ${s.remindDays} дні`,{
+      body:urgent.slice(0,3).map(a=>`${fmtDate(a.dateSerial)} — ${a.c.defendant}`).join('\n'),
+    });
+  }
+
+  // Overdue enforcement writs
+  const overdueEnf=buildEnforcementList(cases,actions,s).filter(c=>c.daysSinceDec>s.enforcementDays);
+  if(overdueEnf.length>0){
+    new Notification(`📜 ${overdueEnf.length} справ — виконавчий лист прострочено!`,{
+      body:overdueEnf.slice(0,3).map(c=>`ДУ ${c.id} · ${c.defendant} — ${c.daysSinceDec} днів`).join('\n'),
+    });
+  }
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o) o.classList.remove('open');});
+});
+
+// ═══════════════════════════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════════════════════════
+function gsStatusEl(id,msg,type){
+  const el=document.getElementById(id); if(!el) return;
+  const bg={ok:'#d1fae5',err:'#fee2e2',info:'#dbeafe'}[type]||'#dbeafe';
+  const col={ok:'#065f46',err:'#991b1b',info:'#1e40af'}[type]||'#1e40af';
+  el.style.cssText=`display:block;padding:10px;border-radius:8px;font-size:13px;background:${bg};color:${col}`;
+  el.textContent=msg;
+}
+function gsStatus(msg,type){ gsStatusEl('gs-status',msg,type); }
+
+function gsTab(t){
+  document.getElementById('gs-panel-script').style.display=t==='script'?'':'none';
+  document.getElementById('gs-panel-file').style.display=t==='file'?'':'none';
+  document.getElementById('gs-tab-script').style.cssText=t==='script'
+    ?'padding:8px 16px;border:none;background:var(--primary);color:#fff;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;font-weight:600'
+    :'padding:8px 16px;border:none;background:#f3f4f6;color:#374151;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px';
+  document.getElementById('gs-tab-file').style.cssText=t==='file'
+    ?'padding:8px 16px;border:none;background:var(--primary);color:#fff;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;font-weight:600'
+    :'padding:8px 16px;border:none;background:#f3f4f6;color:#374151;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px';
+  document.getElementById('gs-sync-btn').textContent=t==='script'?'🔄 Оновити дані':'📥 Імпортувати';
+  window._gsTab=t;
+}
+
+function copyScriptCode(){
+  const code=document.getElementById('gs-script-code').textContent;
+  navigator.clipboard.writeText(code).then(()=>gsStatus('✓ Скопійовано в буфер обміну','ok')).catch(()=>gsStatus('Виберіть текст вручну','info'));
+}
+
+function gsSyncClick(){
+  if(window._gsTab==='file') importFromFiles();
+  else syncFromScript();
+}
+
+function onFileSelect(input, nameId){
+  const el=document.getElementById(nameId);
+  if(el) el.textContent=input.files[0]?'✓ '+input.files[0].name:'Файл не вибрано';
+}
+
+function csvToRows(text){
+  // Detect delimiter: semicolon or comma
+  const firstLine=(text.split('\n')[0]||'');
+  const delim=firstLine.split(';').length > firstLine.split(',').length ? ';' : ',';
+  const rows=[]; let cur='', inQ=false, row=[];
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(c==='"'){ if(inQ&&text[i+1]==='"'){cur+='"';i++;}else inQ=!inQ; }
+    else if(c===delim&&!inQ){ row.push(cur.trim()); cur=''; }
+    else if((c==='\n'||c==='\r')&&!inQ){
+      if(c==='\r'&&text[i+1]==='\n') i++;
+      row.push(cur.trim()); if(row.some(x=>x)) rows.push(row); cur=''; row=[];
+    } else cur+=c;
+  }
+  if(cur||row.length){ row.push(cur.trim()); if(row.some(x=>x)) rows.push(row); }
+  return rows;
+}
+
+function parseImportDate(str){
+  if(!str||str.trim()==='') return null;
+  str=str.trim();
+  // DD.MM.YYYY or DD/MM/YYYY
+  let m=str.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})$/);
+  if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  // YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // Excel serial number
+  const n=parseFloat(str.replace(',','.'));
+  if(!isNaN(n)&&n>40000&&n<70000){
+    const d=new Date(Math.round((n-25569)*86400)*1000);
+    return d.toISOString().split('T')[0];
+  }
+  return null;
+}
+
+function parseMoney(str){
+  if(!str||str.trim()==='') return 0;
+  const n=parseFloat(str.replace(/\s/g,'').replace(',','.').replace(/[^\d.-]/g,''));
+  return isNaN(n)?0:n;
+}
+
+function readFile(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsText(file,'UTF-8'); }); }
+
+function parseCasesCSV(text){
+  const rows=csvToRows(text);
+  if(!rows.length) return [];
+  // Find header row
+  let hi=rows.findIndex(r=>r.some(c=>/відповідач|номер|суд/i.test(c)));
+  if(hi<0) hi=0;
+  const hdr=rows[hi].map(c=>c.toLowerCase().trim());
+  const col=(patterns)=>hdr.findIndex(h=>patterns.some(p=>p.test(h)));
+  const ci={
+    id:       col([/^номер$|^№$|^ду$/i]),
+    date:     col([/^дата$/]),
+    court:    col([/суд/]),
+    defendant:col([/відповідач|піб|піп/]),
+    entity:   col([/^юо$|^юридична/]),
+    claim:    col([/сума позову|позов/]),
+  };
+  const result=[];
+  for(const row of rows.slice(hi+1)){
+    const id=(ci.id>=0?row[ci.id]:'').trim();
+    if(!id||!/^[\d]/.test(id)) continue;
+    const dateStr=ci.date>=0?parseImportDate(row[ci.date]):null;
+    result.push({
+      id,
+      court:     (ci.court>=0?row[ci.court]:'').trim(),
+      defendant: (ci.defendant>=0?row[ci.defendant]:'').trim(),
+      entity:    (ci.entity>=0?row[ci.entity]:'').trim()||'Адвокат',
+      claimAmount: ci.claim>=0?parseMoney(row[ci.claim]):0,
+      startSerial: dateStr?isoToSerial(dateStr):todaySerial(),
+      imported:true,
+    });
+  }
+  return result;
+}
+
+function parseActionsCSV(text){
+  const rows=csvToRows(text);
+  if(!rows.length) return [];
+  let hi=rows.findIndex(r=>r.some(c=>/тип дії|тип_дії/i.test(c)));
+  if(hi<0) hi=rows.findIndex(r=>r.some(c=>/^дата$/i.test(c)));
+  if(hi<0) hi=0;
+  const hdr=rows[hi].map(c=>c.toLowerCase().trim());
+  const col=(patterns)=>hdr.findIndex(h=>patterns.some(p=>p.test(h)));
+  const ci={
+    caseId:    col([/^ду$|^ду\s|^номер$/]),
+    date:      col([/^дата$/]),
+    type:      col([/тип дії|тип_дії/]),
+    cost:      col([/^вартість$/]),
+    entity:    col([/^юо$/]),
+    legalCalc: col([/вартість для суду/]),
+    legalCourt:col([/правова допомога в рішенні/]),
+    decAmount: col([/сума рішення/]),
+    courtFee:  col([/судовий збір/]),
+    note:      col([/примітка/]),
+    url:       col([/посилання|url|http/]),
+  };
+  const result=[]; let idx=0;
+  for(const row of rows.slice(hi+1)){
+    const caseId=(ci.caseId>=0?row[ci.caseId]:'').trim();
+    if(!caseId||!/^[\d]/.test(caseId)) continue;
+    const dateStr=ci.date>=0?parseImportDate(row[ci.date]):null;
+    if(!dateStr) continue;
+    const type=(ci.type>=0?row[ci.type]:'').trim()||'Засідання';
+    const decAmt=ci.decAmount>=0?parseMoney(row[ci.decAmount]):0;
+    const lCalc=ci.legalCalc>=0?parseMoney(row[ci.legalCalc]):0;
+    const lCourt=ci.legalCourt>=0?parseMoney(row[ci.legalCourt]):0;
+    const fee=ci.courtFee>=0?parseMoney(row[ci.courtFee]):0;
+    result.push({
+      id:`imp_${idx++}`,
+      caseId, type,
+      dateSerial: isoToSerial(dateStr),
+      cost: ci.cost>=0?parseMoney(row[ci.cost]):0,
+      entity: (ci.entity>=0?row[ci.entity]:'').trim()||undefined,
+      decisionAmount: decAmt||undefined,
+      legalAidCalculated: lCalc||undefined,
+      legalAidCourt: lCourt||undefined,
+      courtFee: fee||undefined,
+      note: (ci.note>=0?row[ci.note]:'').trim()||undefined,
+      url: (ci.url>=0?row[ci.url]:'').trim()||undefined,
+      imported:true,
+    });
+  }
+  return result;
+}
+
+// ── Rows from Apps Script JSON (array of arrays) → cases/actions ──
+function scriptRowsToCases(rows){
+  if(!rows||rows.length<2) return [];
+  let hi=rows.findIndex(r=>r.some(c=>/відповідач|номер|суд/i.test(String(c))));
+  if(hi<0) hi=0;
+  const hdr=rows[hi].map(c=>String(c).toLowerCase().trim());
+  const col=pats=>hdr.findIndex(h=>pats.some(p=>p.test(h)));
+  const ci={
+    id:   col([/^номер$|^№$|^ду$/]),
+    date: col([/^дата$/]),
+    court:col([/суд/]),
+    def:  col([/відповідач|піб|піп/]),
+    ent:  col([/^юо$/]),
+    claim:col([/сума позову|позов/]),
+  };
+  return rows.slice(hi+1).map(row=>{
+    const id=String(row[ci.id]??'').trim();
+    if(!id||!/^[\d]/.test(id)) return null;
+    const dateStr=ci.date>=0?parseImportDate(String(row[ci.date]??'')):null;
+    return {
+      id, court:String(row[ci.court]??'').trim(),
+      defendant:String(row[ci.def]??'').trim(),
+      entity:String(row[ci.ent]??'').trim()||'Адвокат',
+      claimAmount:ci.claim>=0?parseMoney(String(row[ci.claim]??'')):0,
+      startSerial:dateStr?isoToSerial(dateStr):todaySerial(),
+      imported:true,
+    };
+  }).filter(Boolean);
+}
+
+function scriptRowsToActions(rows){
+  if(!rows||rows.length<2) return [];
+  let hi=rows.findIndex(r=>r.some(c=>/тип дії/i.test(String(c))));
+  if(hi<0) hi=rows.findIndex(r=>r.some(c=>/^дата$/i.test(String(c))));
+  if(hi<0) hi=0;
+  const hdr=rows[hi].map(c=>String(c).toLowerCase().trim());
+  const col=pats=>hdr.findIndex(h=>pats.some(p=>p.test(h)));
+  const ci={
+    caseId:col([/^ду$|^ду\s|^номер$/]),
+    date:  col([/^дата$/]),
+    type:  col([/тип дії/]),
+    cost:  col([/^вартість$/]),
+    ent:   col([/^юо$/]),
+    lCalc: col([/вартість для суду/]),
+    lCourt:col([/правова допомога в рішенні/]),
+    dec:   col([/сума рішення/]),
+    fee:   col([/судовий збір/]),
+    note:  col([/примітка/]),
+    url:   col([/http|посилання/]),
+  };
+  let idx=0;
+  return rows.slice(hi+1).map(row=>{
+    const caseId=String(row[ci.caseId]??'').trim();
+    if(!caseId||!/^[\d]/.test(caseId)) return null;
+    const dateStr=ci.date>=0?parseImportDate(String(row[ci.date]??'')):null;
+    if(!dateStr) return null;
+    const type=String(row[ci.type]??'').trim()||'Засідання';
+    const m=v=>ci[v]>=0?parseMoney(String(row[ci[v]]??'')):0;
+    const s=v=>ci[v]>=0?String(row[ci[v]]??'').trim():'';
+    return {
+      id:`gs_${idx++}`, caseId, type,
+      dateSerial:isoToSerial(dateStr),
+      cost:m('cost'),
+      entity:s('ent')||undefined,
+      decisionAmount:m('dec')||undefined,
+      legalAidCalculated:m('lCalc')||undefined,
+      legalAidCourt:m('lCourt')||undefined,
+      courtFee:m('fee')||undefined,
+      note:s('note')||undefined,
+      url:s('url')||undefined,
+      imported:true,
+    };
+  }).filter(Boolean);
+}
+
+// JSONP — works from file:// without CORS issues
+function jsonpFetch(url){
+  return new Promise((resolve,reject)=>{
+    const cb='_gsCallback'+Date.now();
+    const script=document.createElement('script');
+    let done=false;
+    const cleanup=()=>{ delete window[cb]; if(script.parentNode) script.parentNode.removeChild(script); };
+    const timer=setTimeout(()=>{ if(!done){done=true;cleanup();reject(new Error('Timeout — перевірте URL'));} },15000);
+    window[cb]=(data)=>{ if(!done){done=true;clearTimeout(timer);cleanup();resolve(data);} };
+    script.onerror=()=>{ if(!done){done=true;clearTimeout(timer);cleanup();reject(new Error('Не вдалось завантажити скрипт'));} };
+    script.src=url+(url.includes('?')?'&':'?')+'callback='+cb;
+    document.head.appendChild(script);
+  });
+}
+
+async function syncFromScript(silent=false){
+  const cfg=JSON.parse(localStorage.getItem('gs_script_cfg')||'{}');
+  const url=(document.getElementById('gs-script-url')?.value||'').trim() || cfg.url||'';
+  const token=(document.getElementById('gs-token')?.value||'').trim() || cfg.token||'crm2026secret';
+  if(!url){ if(!silent) gsStatus('Вкажіть URL Apps Script','err'); return; }
+
+  const btn=document.getElementById('gs-sync-btn');
+  if(btn){btn.disabled=true; btn.textContent='⏳ Оновлення...';}
+  if(!silent) gsStatus('Підключення до Google Sheets...','info');
+
+  try{
+    const fullUrl=`${url}?token=${encodeURIComponent(token)}`;
+    const data=await jsonpFetch(fullUrl);
+    if(!data||data.error) throw new Error(data?.error||'Порожня відповідь');
+
+    const cases=data['1_Реєстр ДУ']?scriptRowsToCases(data['1_Реєстр ДУ']):[];
+    const actions=data['2_Реєстр Дій']?scriptRowsToActions(data['2_Реєстр Дій']):[];
+
+    if(cases.length) localStorage.setItem('gs_cases',JSON.stringify(cases));
+    if(actions.length) localStorage.setItem('gs_actions',JSON.stringify(actions));
+
+    const ts=new Date().toLocaleString('uk-UA');
+    const newCfg={url,token,auto:document.getElementById('gs-auto')?.value||'1',lastSync:ts};
+    localStorage.setItem('gs_script_cfg',JSON.stringify(newCfg));
+
+    const msg=`✅ Оновлено: ${cases.length} справ, ${actions.length} дій · ${ts}`;
+    if(!silent) gsStatus(msg,'ok');
+    const ls=document.getElementById('gs-last-sync');
+    if(ls) ls.textContent=`Останнє оновлення: ${ts}`;
+    const indicator=document.getElementById('gs-nav-indicator');
+    if(indicator){ indicator.textContent='✓'; indicator.style.display=''; }
+    renderAll();
+  }catch(e){
+    const msg='❌ '+e.message;
+    if(!silent) gsStatus(msg,'err');
+    else console.warn('Auto-sync:',e.message);
+  }finally{
+    if(btn){btn.disabled=false; btn.textContent='🔄 Оновити дані';}
+  }
+}
+
+async function importFromFiles(){
+  const btn=document.getElementById('gs-sync-btn');
+  const fileDu=document.getElementById('file-du').files[0];
+  const fileAct=document.getElementById('file-actions').files[0];
+  if(!fileDu&&!fileAct){ gsStatus('Виберіть хоча б один файл','err'); return; }
+  btn.disabled=true; btn.textContent='⏳ Обробка...';
+  try{
+    let cases=[], actions=[];
+    if(fileDu){
+      gsStatus('Читання файлу справ...','info');
+      const text=await readFile(fileDu);
+      cases=parseCasesCSV(text);
+      gsStatus(`Реєстр ДУ: знайдено ${cases.length} справ`,'info');
+    }
+    if(fileAct){
+      gsStatus(`${cases.length?'Реєстр ДУ: '+cases.length+' справ. ':''}Читання дій...`,'info');
+      const text=await readFile(fileAct);
+      actions=parseActionsCSV(text);
+    }
+    if(cases.length){
+      // Merge: imported overrides base by id
+      const existing=JSON.parse(localStorage.getItem('gs_cases')||'[]').filter(c=>!c.imported);
+      localStorage.setItem('gs_cases',JSON.stringify([...existing,...cases]));
+    }
+    if(actions.length){
+      const existing=JSON.parse(localStorage.getItem('gs_actions')||'[]').filter(a=>!a.imported);
+      localStorage.setItem('gs_actions',JSON.stringify([...existing,...actions]));
+    }
+    const ts=new Date().toLocaleString('uk-UA');
+    localStorage.setItem('gs_last_import',ts);
+    const ls=document.getElementById('gs-last-sync');
+    if(ls) ls.textContent=`Останній імпорт: ${ts}`;
+    gsStatus(`✅ Імпортовано: ${cases.length} справ, ${actions.length} дій`,'ok');
+    renderAll();
+  } catch(e){
+    gsStatus('❌ Помилка читання файлу: '+e.message,'err');
+    console.error(e);
+  } finally{
+    btn.disabled=false; btn.textContent='📥 Імпортувати';
+  }
+}
+
+
+function loadGSConfig(){
+  const cfg=JSON.parse(localStorage.getItem('gs_script_cfg')||'{}');
+  const urlEl=document.getElementById('gs-script-url');
+  const tokenEl=document.getElementById('gs-token');
+  const autoEl=document.getElementById('gs-auto');
+  if(urlEl&&cfg.url) urlEl.value=cfg.url;
+  if(tokenEl&&cfg.token) tokenEl.value=cfg.token;
+  if(autoEl&&cfg.auto) autoEl.value=cfg.auto;
+  const ls=document.getElementById('gs-last-sync');
+  if(ls&&cfg.lastSync) ls.textContent=`Останнє оновлення: ${cfg.lastSync}`;
+  // Auto-sync if configured
+  if(cfg.url && cfg.auto!=='0'){
+    setTimeout(()=>syncFromScript(true), 1500);
+  }
+  window._gsTab='script';
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+calInit();
+renderAll();
+requestNotifications();
+setTimeout(loadGSConfig, 100);
+</script>
+</body>
+</html>
