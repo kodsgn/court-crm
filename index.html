@@ -1391,7 +1391,12 @@ function renderWritTrackingCard(cases, actions, caseMap){
       daysSinceWrit:Math.max(0, daysDiff(a.dateSerial)*-1),
       isEnforcement:overrides[a.caseId]==='enforcement'
     };
-  }).sort((a,b)=>b.daysSinceWrit-a.daysSinceWrit);
+  }).sort((a,b)=>{
+    const aCollected=a.status==='collected'||a.status==='partial'?1:0;
+    const bCollected=b.status==='collected'||b.status==='partial'?1:0;
+    if(aCollected!==bCollected) return aCollected-bCollected;
+    return b.daysSinceWrit-a.daysSinceWrit;
+  });
   dashText('writ-count', writCases.length,
     writCases.length?'background:#dbeafe;color:#1e40af;font-weight:700;padding:2px 8px;border-radius:100px;font-size:12px':'');
   if(!writCases.length){
