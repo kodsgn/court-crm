@@ -1304,7 +1304,9 @@ function renderEnfNeededCard(cases, actions, s, caseMap){
 
 /* ── AWAIT DECISION card ── */
 function renderAwaitDecCard(cases, actions, s, caseMap){
+  const overrides=getStatusOverrides();
   const awaitDec=cases.filter(c=>{
+    if(overrides[c.id]==='enforcement') return false;
     const ca=actions.filter(a=>a.caseId===c.id);
     if(ca.some(a=>a.type==='Рішення')||ca.some(a=>a.type==='Вик.лист')) return false;
     const hearings=ca.filter(a=>a.type==='Засідання' && a.dateSerial).sort((a,b)=>b.dateSerial-a.dateSerial);
