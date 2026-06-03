@@ -1,0 +1,91 @@
+name: Enforce required changes
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply required changes
+        id: fix
+        run: |
+          python3 - <<'PYEOF'
+          import re, sys
+
+          with open('index.html') as f:
+              c = f.read()
+
+          original = c
+
+          # 1. Name
+          c = c.replace('<title>КешТайм CRM</title>', '<title>судові справи</title>')
+          c = c.replace('⚖️ КешТайм CRM', 'судові справи')
+          c = c.replace('>cashtime CRM<', '>судові справи<')
+
+          # 2. Remove browser notifications
+          notif_fn = re.search(
+              r'\nfunction requestNotifications\(\)\{.*?\}\n}',
+              c, re.DOTALL
+          )
+          if notif_fn:
+              c = c.replace(notif_fn.group(), '')
+          sched_fn = re.search(
+              r'\nfunction scheduleNotifications\(\)\{.*?\n\}\n',
+              c, re.DOTALL
+          )
+          if sched_fn:
+              c = c.replace(sched_fn.group(), '')
+          c = c.replace('requestNotifications();', '')
+          c = c.replace(',requestNotifications()', '')
+
+          # 3. Responsive CSS (add if missing)
+          if '.la-rates-grid{' not in c:
+              responsive = """
+          .la-rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+          .la-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+          .nav-burger{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1}
+          @media(max-width:768px){.main{padding:12px}.nav{padding:0 10px;height:48px}.nav-gs-label{display:none}.section-actions{flex-wrap:wrap;gap:6px}.cal-panel{grid-template-columns:1fr!important}#cal-day-detail{min-height:auto;width:100%}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}}
+          @media(max-width:480px){.main{padding:8px}.nav{height:auto;min-height:48px;flex-wrap:wrap;padding:6px 10px;align-items:center}.nav-brand{flex:1}.nav-burger{display:block}.nav-right{order:1}.nav-links{order:3;width:100%;display:none;flex-direction:column;padding:6px 0 4px;border-top:1px solid rgba(255,255,255,.2);margin-top:4px}.nav-links.open{display:flex}.nav-btn{padding:9px 12px;font-size:13px;text-align:left;width:100%}.stats-row{grid-template-columns:1fr 1fr}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}.card{padding:12px}.modal{padding:16px;width:100%!important;max-width:calc(100vw - 32px)!important}.form-row{grid-template-columns:1fr}.modal-footer{flex-direction:column-reverse}.modal-footer .btn{width:100%;justify-content:center}.rem{grid-template-columns:auto 1fr}.rem-badge{display:none}}
+          """
+              target = '@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}'
+              if target in c:
+                  c = c.replace(target, target + responsive)
+              else:
+                  c = c.replace('</style>', responsive + '</style>', 1)
+
+          # 4. la-grids in JS template
+          c = c.replace(
+              'style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px"',
+              'class="la-rates-grid"'
+          )
+          c = c.replace(
+              'style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"',
+              'class="la-stats-grid"'
+          )
+
+          if c != original:
+              with open('index.html', 'w') as f:
+                  f.write(c)
+              print('CHANGED')
+          else:
+              print('NO_CHANGE')
+          PYEOF
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet index.html; then
+            git add index.html
+            git commit -m "Auto-fix: enforce required changes (name, notifications, responsive)"
+            git push
+          fi
