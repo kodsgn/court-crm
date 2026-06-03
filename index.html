@@ -1047,7 +1047,9 @@ function caseStatus(caseId, actions){
 }
 // ── Shared helper: build enforcement list ──
 function buildEnforcementList(cases,actions,s){
+  const overrides=getStatusOverrides();
   return cases.filter(c=>{
+    if(overrides[c.id]==='enforcement') return false;
     const ca=actions.filter(a=>a.caseId===c.id);
     return ca.some(a=>a.type==='Рішення') && !ca.some(a=>a.type==='Вик.лист');
   }).map(c=>{
