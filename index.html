@@ -1010,7 +1010,26 @@ function saveSettings(){
 // ═══════════════════════════════════════════════════════════
 // CASE STATUS
 // ═══════════════════════════════════════════════════════════
+const STATUS_OPTIONS=[
+  {key:'claim',       label:'Позов',             badge:'b-blue'},
+  {key:'active',      label:'Засідання',          badge:'b-orange'},
+  {key:'decision',    label:'Рішення',            badge:'b-yellow'},
+  {key:'done',        label:'Виконавчий лист',    badge:'b-green'},
+  {key:'enforcement', label:'Стягнення',          badge:'b-purple'},
+  {key:'new',         label:'Нова',               badge:'b-gray'},
+];
+
+function getStatusOverrides(){ return JSON.parse(localStorage.getItem('status_overrides')||'{}'); }
+function setStatusOverride(caseId,status){
+  const d=getStatusOverrides(); d[caseId]=status;
+  localStorage.setItem('status_overrides',JSON.stringify(d));
+}
+
 function caseStatus(caseId, actions){
+  // Manual override has priority
+  const override=getStatusOverrides()[caseId];
+  if(override) return override;
+  // Auto-detect from actions
   const ca=actions.filter(a=>a.caseId===caseId);
   if(!ca.length) return 'new';
   const types=new Set(ca.map(a=>a.type));
@@ -1063,14 +1082,14 @@ function addEnforcementAction(e, caseId){
 }
 
 function statusBadge(s){
-  const m={
-    new:'<span class="badge b-gray">Нова</span>',
-    claim:'<span class="badge b-blue">Позов подано</span>',
-    active:'<span class="badge b-orange">Засідання</span>',
-    decision:'<span class="badge b-yellow">Рішення</span>',
-    done:'<span class="badge b-green">Завершено</span>',
-  };
-  return m[s]||'';
+  const opt=STATUS_OPTIONS.find(o=>o.key===s)||{label:s,badge:'b-gray'};
+  return `<span class="badge ${opt.badge}">${opt.label}</span>`;
+}
+function statusSelect(caseId, current){
+  return `<select onchange="setStatusOverride('${caseId}',this.value);renderCases()"
+    style="font-size:12px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;cursor:pointer;max-width:140px">
+    ${STATUS_OPTIONS.map(o=>`<option value="${o.key}"${o.key===current?' selected':''}>${o.label}</option>`).join('')}
+  </select>`;
 }
 function typeBadge(t){
   const m={
@@ -1652,7 +1671,7 @@ function renderCases(){
         <td class="td-amt">${fmtMoney(c.claimAmount)}</td>
         <td class="td-amt ${c.decAmount>0?'c-green':''}">${c.decAmount!=null?fmtMoney(c.decAmount):'—'}</td>
         <td style="font-size:12px;${c.decSerial?'font-weight:600':'color:var(--muted)'}">${c.decSerial?fmtDate(c.decSerial):'—'}</td>
-        <td>${statusBadge(c.status)}</td>
+        <td>${statusSelect(c.id, c.status)}</td>
         <td style="font-size:12px;color:var(--muted)">${fmtDate(c.startSerial)}</td>
         <td>
           <button class="btn-icon" onclick="showCaseDetail('${c.id}')" title="Переглянути">🔍</button>
