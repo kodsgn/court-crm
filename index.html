@@ -1413,7 +1413,7 @@ function renderWritTrackingCard(cases, actions, caseMap){
       </td>
       <td style="padding:10px 12px;font-weight:700;color:#059669;white-space:nowrap">${w.writAmount?fmtMoney(w.writAmount):'—'}</td>
       <td style="padding:10px 12px">
-        ${w.isEnforcement
+        ${(w.isEnforcement||w.status==='collected'||w.status==='partial')
           ? `<input type="number" value="${w.collectedAmount}" placeholder="0"
               style="width:110px;font-size:12px;padding:4px 8px;border:1px solid #6ee7b7;border-radius:6px;font-weight:700;color:#059669"
               onchange="setCollectedAmount('${w.caseId}',this.value);renderAll()">`
