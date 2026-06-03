@@ -72,6 +72,20 @@ jobs:
               'class="la-stats-grid"'
           )
 
+          # 5. Fix daysLabel bug (use bytes to handle backticks)
+          import os
+          with open('index.html', 'wb') as f:
+              f.write(c.encode('utf-8'))
+          with open('index.html', 'rb') as f:
+              cb = f.read()
+          old_dl = b"rb-far',txt:`${fmtDate(serial)}`}"
+          new_dl = b"rb-far',txt:`\xd0\xa7\xd0\xb5\xd1\x80\xd0\xb5\xd0\xb7 ${d} \xd0\xb4\xd0\xbd.`}"
+          cb = cb.replace(old_dl, new_dl)
+          with open('index.html', 'wb') as f:
+              f.write(cb)
+          with open('index.html') as f:
+              c = f.read()
+
           if c != original:
               with open('index.html', 'w') as f:
                   f.write(c)
