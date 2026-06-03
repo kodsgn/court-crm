@@ -31,8 +31,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+/* ── Legal Aid grids ── */
 .la-rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .la-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+/* ── Hamburger ── */
 .nav-burger{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1}
 @media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:768px){.main{padding:12px}.nav{padding:0 10px;gap:4px;height:48px}.nav-brand{font-size:14px;margin-right:4px}.nav-btn{padding:5px 9px;font-size:12px}.nav-gs-label{display:none}.section-actions{flex-wrap:wrap;gap:6px}.section-actions .page-title{width:100%;margin-bottom:2px}.section-actions input[type=text]{flex:1;min-width:140px}.section-actions select{flex:1;min-width:120px}.cal-panel{grid-template-columns:1fr!important}#cal-day-detail{min-height:auto;width:100%}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}.card-h{flex-wrap:wrap;gap:6px}}
@@ -194,9 +196,9 @@ a.url-link:hover{text-decoration:underline}
 
   <!-- Calendar card -->
   <div class="card" style="margin-bottom:16px">
-    <div class="card-h">
+    <div class="card-h" style="display:grid;grid-template-columns:1fr minmax(300px,38%);align-items:center;gap:20px">
       <span class="card-title">📅 Календар засідань</span>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
         <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹ Попередній</button>
         <span id="cal-month-label" style="font-weight:700;font-size:14px;min-width:160px;text-align:center"></span>
         <button class="btn btn-ghost btn-sm" onclick="calNext()">Наступний ›</button>
@@ -1858,7 +1860,7 @@ function showCaseDetail(caseId){
       <div><div class="stat-label">ЮО</div><span class="badge ${c.entity==='Адвокат'?'b-blue':'b-purple'}" style="margin-top:4px">${c.entity}</span></div>
       <div><div class="stat-label">Сума позову</div><div style="font-weight:700;font-size:16px;margin-top:2px">${fmtMoney(c.claimAmount)}</div></div>
       <div><div class="stat-label">Статус</div><div style="margin-top:4px">
-        <select onchange="setStatusOverride('${caseId}',this.value);document.getElementById('detail-content').querySelector('select').value=this.value;renderAll()"
+        <select onchange="setStatusOverride('${caseId}',this.value);renderAll()"
           style="font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:600">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.key}"${o.key===status?' selected':''}>${o.label}</option>`).join('')}
         </select>
@@ -2172,15 +2174,6 @@ function calShowMonthSummary(hearingsByDay){
 // ═══════════════════════════════════════════════════════════
 function toggleNav(){
   document.getElementById('nav-links').classList.toggle('open');
-}
-
-  // Overdue enforcement writs
-  const overdueEnf=buildEnforcementList(cases,actions,s).filter(c=>c.daysSinceDec>s.enforcementDays);
-  if(overdueEnf.length>0){
-    new Notification(`📜 ${overdueEnf.length} справ — виконавчий лист прострочено!`,{
-      body:overdueEnf.slice(0,3).map(c=>`ДУ ${c.id} · ${c.defendant} — ${c.daysSinceDec} днів`).join('\n'),
-    });
-  }
 }
 
 // Close modals on overlay click
@@ -2767,7 +2760,6 @@ async function refreshAllDocBadges(){
 // ═══════════════════════════════════════════════════════════
 calInit();
 renderAll();
-
 setTimeout(loadGSConfig, 100);
 setTimeout(refreshAllDocBadges, 500);
 </script>
