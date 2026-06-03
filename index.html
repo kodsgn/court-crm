@@ -20,7 +20,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nav-btn{background:none;border:none;color:rgba(255,255,255,.8);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;transition:.15s}
 .nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,.18);color:#fff}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.alert-dot{background:#ef4444;color:#fff;font-size:11px;font-weight:700;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
 
 /* ── LAYOUT ── */
 .main{padding:20px;max-width:1400px;margin:0 auto}
@@ -180,7 +179,6 @@ a.url-link:hover{text-decoration:underline}
     <button class="nav-btn" onclick="showSection('reminders')">Нагадування</button>
   </div>
   <div class="nav-right">
-    <span id="alert-count" class="alert-dot" style="display:none">0</span>
     <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;gap:6px" onclick="openModal('modal-gsheets')" title="Синхронізація з Google Sheets">
       📊 <span class="nav-gs-label">Google Sheets</span>
       <span id="gs-nav-indicator" style="display:none;font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:100px"></span>
@@ -1263,10 +1261,7 @@ function renderHearingsCard(cases, actions, s, caseMap){
     .filter(a=>a.days>=0 && a.days<=60 && a.c)
     .sort((a,b)=>a.days-b.days);
   dashText('hearing-count', upcoming.length);
-  const urgentCount=upcoming.filter(a=>a.days<=s.remindDays).length;
-  dashText('alert-count', urgentCount, '');
-  const ac=document.getElementById('alert-count');
-  if(ac) ac.style.display=urgentCount>0?'':'none';
+
   dashSet('upcoming-hearings', upcoming.length
     ? upcoming.map(a=>{
         const dl=daysLabel(a.days);
