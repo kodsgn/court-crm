@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>КешТайм CRM</title>
+<title>судові справи</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -31,7 +31,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
-@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}}
+/* ── Legal Aid grids ── */
+.la-rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.la-stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+/* ── Hamburger ── */
+.nav-burger{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1}
+@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:768px){.main{padding:12px}.nav{padding:0 10px;gap:4px;height:48px}.nav-brand{font-size:14px;margin-right:4px}.nav-btn{padding:5px 9px;font-size:12px}.nav-gs-label{display:none}.section-actions{flex-wrap:wrap;gap:6px}.section-actions .page-title{width:100%;margin-bottom:2px}.section-actions input[type=text]{flex:1;min-width:140px}.section-actions select{flex:1;min-width:120px}.cal-panel{grid-template-columns:1fr!important}#cal-day-detail{min-height:auto;width:100%}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}.card-h{flex-wrap:wrap;gap:6px}}
+@media(max-width:480px){.main{padding:8px}.nav{height:auto;min-height:48px;flex-wrap:wrap;padding:6px 10px;gap:0;align-items:center}.nav-brand{font-size:14px;flex:1}.nav-burger{display:block}.nav-right{order:1;display:flex;align-items:center;gap:6px}.nav-links{order:3;width:100%;display:none;flex-direction:column;gap:2px;padding:6px 0 4px;border-top:1px solid rgba(255,255,255,.2);margin-top:4px}.nav-links.open{display:flex}.nav-btn{padding:9px 12px;font-size:13px;text-align:left;border-radius:6px;width:100%}.stats-row{grid-template-columns:1fr 1fr}.stat-val{font-size:22px}.la-rates-grid{grid-template-columns:1fr}.la-stats-grid{grid-template-columns:1fr 1fr}.card{padding:12px}.modal{padding:16px;width:100%!important;max-width:calc(100vw - 32px)!important}.form-row{grid-template-columns:1fr}.modal-footer{flex-direction:column-reverse;gap:6px}.modal-footer .btn{width:100%;justify-content:center}.cal-cell{min-height:38px;font-size:12px;padding-top:6px}.cal-dow{font-size:10px;padding:4px 1px}td,th{padding:7px 8px}.section-actions input[type=text],.section-actions select{width:100%;flex:unset}.rem{grid-template-columns:auto 1fr;gap:6px}.rem-badge{display:none}}
 
 /* ── CARD ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
@@ -163,9 +170,10 @@ a.url-link:hover{text-decoration:underline}
 <body>
 
 <!-- NAV -->
-<nav class="nav">
-  <span class="nav-brand">⚖️ КешТайм CRM</span>
-  <div class="nav-links">
+<nav class="nav" id="main-nav">
+  <span class="nav-brand">судові справи</span>
+  <button class="nav-burger" onclick="toggleNav()" aria-label="Меню">☰</button>
+  <div class="nav-links" id="nav-links">
     <button class="nav-btn active" onclick="showSection('dashboard')">Головна</button>
     <button class="nav-btn" onclick="showSection('cases')">Справи</button>
     <button class="nav-btn" onclick="showSection('actions')">Дії</button>
@@ -174,7 +182,7 @@ a.url-link:hover{text-decoration:underline}
   <div class="nav-right">
     <span id="alert-count" class="alert-dot" style="display:none">0</span>
     <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;gap:6px" onclick="openModal('modal-gsheets')" title="Синхронізація з Google Sheets">
-      📊 Google Sheets
+      📊 <span class="nav-gs-label">Google Sheets</span>
       <span id="gs-nav-indicator" style="display:none;font-size:10px;background:rgba(255,255,255,.2);padding:1px 6px;border-radius:100px"></span>
     </button>
     <button class="btn btn-primary btn-sm" onclick="openModal('modal-case')">+ Справа</button>
@@ -188,17 +196,17 @@ a.url-link:hover{text-decoration:underline}
 
   <!-- Calendar card -->
   <div class="card" style="margin-bottom:16px">
-    <div class="card-h">
+    <div class="card-h" style="display:grid;grid-template-columns:1fr minmax(300px,38%);align-items:center;gap:20px">
       <span class="card-title">📅 Календар засідань</span>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
         <button class="btn btn-ghost btn-sm" onclick="calPrev()">‹ Попередній</button>
         <span id="cal-month-label" style="font-weight:700;font-size:14px;min-width:160px;text-align:center"></span>
         <button class="btn btn-ghost btn-sm" onclick="calNext()">Наступний ›</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+    <div class="cal-panel" style="display:grid;grid-template-columns:1fr minmax(300px,38%);gap:20px;align-items:start">
       <div id="cal-grid"></div>
-      <div id="cal-day-detail" style="background:#f9fafb;border-radius:8px;padding:14px;min-height:200px"></div>
+      <div id="cal-day-detail" style="background:#f9fafb;border-radius:8px;padding:14px;overflow-y:auto;align-self:stretch"></div>
     </div>
   </div>
 
@@ -1113,6 +1121,7 @@ function showSection(id){
   if(id==='cases') renderCases();
   if(id==='actions') renderActions();
   if(id==='reminders') renderReminders();
+  document.getElementById('nav-links').classList.remove('open');
 }
 function showSection2(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -1583,7 +1592,7 @@ function renderLegalAidCard(actions, caseMap){
 
   dashSet('legal-aid-summary',`
     <!-- Rates config -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div class="la-rates-grid">
       <div style="padding:10px 14px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:12px;font-weight:700;color:#1e40af;white-space:nowrap">Адвокат:</span>
         <label style="font-size:12px;display:flex;align-items:center;gap:5px;color:#1e40af">
@@ -1604,7 +1613,7 @@ function renderLegalAidCard(actions, caseMap){
       </div>
     </div>
     <!-- Summary stats -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    <div class="la-stats-grid">
       <div style="background:#ede9fe;border-radius:8px;padding:12px">
         <div class="stat-label" style="color:#5b21b6">Авто-розрахунок</div>
         <div style="font-size:18px;font-weight:800;color:#7c3aed">${fmtMoney(totalAuto)}</div>
@@ -2158,38 +2167,8 @@ function calShowMonthSummary(hearingsByDay){
 // ═══════════════════════════════════════════════════════════
 // BROWSER NOTIFICATIONS
 // ═══════════════════════════════════════════════════════════
-function requestNotifications(){
-  if('Notification' in window && Notification.permission==='default'){
-    Notification.requestPermission().then(p=>{
-      if(p==='granted') scheduleNotifications();
-    });
-  } else if(Notification.permission==='granted'){
-    scheduleNotifications();
-  }
-}
-function scheduleNotifications(){
-  const s=getSettings();
-  const actions=getActions(), cases=getCases();
-  const caseMap=Object.fromEntries(cases.map(c=>[c.id,c]));
-
-  // Upcoming hearings
-  const urgent=actions
-    .filter(a=>a.type==='Засідання' && a.dateSerial)
-    .map(a=>({...a,days:daysDiff(a.dateSerial),c:caseMap[a.caseId]}))
-    .filter(a=>a.days>=0 && a.days<=s.remindDays && a.c);
-  if(urgent.length>0){
-    new Notification(`⚖️ ${urgent.length} засідань найближчі ${s.remindDays} дні`,{
-      body:urgent.slice(0,3).map(a=>`${fmtDate(a.dateSerial)} — ${a.c.defendant}`).join('\n'),
-    });
-  }
-
-  // Overdue enforcement writs
-  const overdueEnf=buildEnforcementList(cases,actions,s).filter(c=>c.daysSinceDec>s.enforcementDays);
-  if(overdueEnf.length>0){
-    new Notification(`📜 ${overdueEnf.length} справ — виконавчий лист прострочено!`,{
-      body:overdueEnf.slice(0,3).map(c=>`ДУ ${c.id} · ${c.defendant} — ${c.daysSinceDec} днів`).join('\n'),
-    });
-  }
+function toggleNav(){
+  document.getElementById('nav-links').classList.toggle('open');
 }
 
 // Close modals on overlay click
@@ -2776,7 +2755,6 @@ async function refreshAllDocBadges(){
 // ═══════════════════════════════════════════════════════════
 calInit();
 renderAll();
-requestNotifications();
 setTimeout(loadGSConfig, 100);
 setTimeout(refreshAllDocBadges, 500);
 </script>
