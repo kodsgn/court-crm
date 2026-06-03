@@ -671,17 +671,28 @@ function doGet(e) {
     <!-- FILE TAB -->
     <div id="gs-panel-file" style="display:none">
       <div style="background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:#374151">
-        Google Sheets → <b>Файл → Завантажити → CSV</b> для кожного аркуша окремо
+        <b>Варіант А — Excel файл цілком</b> (КешТаймРеєстр.xlsx або будь-який .xlsx)<br>
+        <span style="color:var(--muted)">Автоматично знайде аркуші "1_Реєстр ДУ" і "2_Реєстр Дій"</span>
       </div>
       <div class="fgroup">
-        <label>Файл "1_Реєстр ДУ"</label>
-        <input type="file" id="file-du" accept=".csv,.txt" style="padding:6px;border:2px dashed var(--border);border-radius:8px;font-size:12px;width:100%" onchange="onFileSelect(this,'file-du-name')">
-        <div id="file-du-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
+        <label>📊 Excel файл (.xlsx) — весь файл одразу</label>
+        <input type="file" id="file-excel" accept=".xlsx,.xls"
+          style="padding:8px;border:2px dashed #22c55e;border-radius:8px;font-size:13px;width:100%;cursor:pointer;background:#f0fdf4"
+          onchange="onFileSelect(this,'file-excel-name')">
+        <div id="file-excel-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
       </div>
-      <div class="fgroup">
-        <label>Файл "2_Реєстр Дій"</label>
-        <input type="file" id="file-actions" accept=".csv,.txt" style="padding:6px;border:2px dashed var(--border);border-radius:8px;font-size:12px;width:100%" onchange="onFileSelect(this,'file-actions-name')">
-        <div id="file-actions-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
+      <div style="text-align:center;color:var(--muted);font-size:12px;margin:8px 0">— або окремі CSV файли —</div>
+      <div class="form-row">
+        <div class="fgroup">
+          <label>CSV "1_Реєстр ДУ"</label>
+          <input type="file" id="file-du" accept=".csv,.txt" style="padding:6px;border:2px dashed var(--border);border-radius:8px;font-size:12px;width:100%" onchange="onFileSelect(this,'file-du-name')">
+          <div id="file-du-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
+        </div>
+        <div class="fgroup">
+          <label>CSV "2_Реєстр Дій"</label>
+          <input type="file" id="file-actions" accept=".csv,.txt" style="padding:6px;border:2px dashed var(--border);border-radius:8px;font-size:12px;width:100%" onchange="onFileSelect(this,'file-actions-name')">
+          <div id="file-actions-name" style="font-size:11px;color:var(--muted);margin-top:3px">Файл не вибрано</div>
+        </div>
       </div>
       <div id="gs-status-file" style="display:none;padding:10px;border-radius:8px;font-size:13px;margin-top:4px"></div>
     </div>
@@ -705,6 +716,7 @@ function doGet(e) {
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <!-- ── MODAL: PDF DOCUMENTS ── -->
 <div class="overlay" id="modal-docs">
   <div class="modal" style="width:560px">
@@ -2390,24 +2402,74 @@ async function syncFromScript(silent=false){
   }
 }
 
+// Parse Excel workbook using SheetJS
+function readExcel(file){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+        res(wb);
+      }catch(err){rej(err);}
+    };
+    reader.onerror=rej;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function xlsxSheetToRows(wb, sheetName){
+  // Try exact name, then partial match
+  let name=wb.SheetNames.find(n=>n===sheetName)
+    || wb.SheetNames.find(n=>n.includes(sheetName.replace(/^\d+_/,'')))
+    || wb.SheetNames.find(n=>n.toLowerCase().includes('ду')||n.toLowerCase().includes('du'));
+  if(!name) return null;
+  const ws=wb.Sheets[name];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'dd.mm.yyyy'});
+  return rows.filter(r=>r.some(c=>c!==''&&c!=null));
+}
+
 async function importFromFiles(){
   const btn=document.getElementById('gs-sync-btn');
+  const fileExcel=document.getElementById('file-excel').files[0];
   const fileDu=document.getElementById('file-du').files[0];
   const fileAct=document.getElementById('file-actions').files[0];
-  if(!fileDu&&!fileAct){ gsStatus('Виберіть хоча б один файл','err'); return; }
+  if(!fileExcel&&!fileDu&&!fileAct){ gsStatus('Виберіть Excel або CSV файл','err'); return; }
   btn.disabled=true; btn.textContent='⏳ Обробка...';
   try{
     let cases=[], actions=[];
-    if(fileDu){
-      gsStatus('Читання файлу справ...','info');
-      const text=await readFile(fileDu);
-      cases=parseCasesCSV(text);
-      gsStatus(`Реєстр ДУ: знайдено ${cases.length} справ`,'info');
+
+    // ── Excel (пріоритет) ──
+    if(fileExcel){
+      gsStatus('Читання Excel файлу...','info');
+      if(typeof XLSX==='undefined'){ gsStatus('❌ Бібліотека Excel не завантажилась. Перевірте інтернет.','err'); return; }
+      const wb=await readExcel(fileExcel);
+      gsStatus(`Аркуші: ${wb.SheetNames.join(', ')}`, 'info');
+
+      // Реєстр ДУ
+      const duRows=xlsxSheetToRows(wb,'1_Реєстр ДУ');
+      if(duRows){ cases=parseCasesCSV(duRows.map(r=>r.join(',')).join('\n')); }
+
+      // Реєстр Дій
+      const actSheet=wb.SheetNames.find(n=>n.includes('Дій')||n.includes('дій')||n.includes('2_'));
+      if(actSheet){
+        const actRows=XLSX.utils.sheet_to_json(wb.Sheets[actSheet],{header:1,raw:false,dateNF:'dd.mm.yyyy'})
+          .filter(r=>r.some(c=>c!==''&&c!=null));
+        actions=parseActionsCSV(actRows.map(r=>r.join(',')).join('\n'));
+      }
+      gsStatus(`Excel: знайдено ${cases.length} справ, ${actions.length} дій`,'info');
     }
-    if(fileAct){
-      gsStatus(`${cases.length?'Реєстр ДУ: '+cases.length+' справ. ':''}Читання дій...`,'info');
-      const text=await readFile(fileAct);
-      actions=parseActionsCSV(text);
+
+    // ── CSV файли (якщо нема Excel) ──
+    if(!fileExcel){
+      if(fileDu){
+        gsStatus('Читання CSV справ...','info');
+        const text=await readFile(fileDu);
+        cases=parseCasesCSV(text);
+      }
+      if(fileAct){
+        const text=await readFile(fileAct);
+        actions=parseActionsCSV(text);
+      }
     }
     if(cases.length){
       // Merge: imported overrides base by id
